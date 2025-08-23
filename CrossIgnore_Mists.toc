@@ -1,0 +1,29 @@
+## Interface: 50500
+## Title: Cross|cffff7d0aIgnore
+## Author: Jay
+## 1.1 Maintainer: Jay @ Tichondrius
+## Version: 1.1
+## Notes: Filter and Spam Blocker, also blocks people who ignore you in LFG.
+## SavedVariables: CrossIgnoreDB, CrossIgnoreMinimapDB
+## SavedVariablesPerCharacter: CrossIgnoreSingleDB
+## IconTexture: Interface\AddOns\CrossGambling\Media\Icon
+## Category-enUS: CrossIgnore
+## Category-deDE: CrossIgnorieren
+## Category-esES: CrossIgnorar
+## Category-esMX: CrossIgnorar
+## Category-frFR: CrossIgnorer
+## Category-itIT: CrossIgnorare
+## Category-koKR: Cross무시
+## Category-ptBR: CrossIgnorar
+## Category-ruRU: CrossИгнорировать
+## Category-zhCN: Cross忽视
+## Category-zhTW: Cross忽視
+
+Libs.xml
+CrossIgnore.lua
+modules/chatfilter.lua
+modules/chatfilterdefaults.lua
+modules/rightclick.lua
+modules/blockhandler.lua
+modules/options.lua
+CrossIgnoreUI.lua
