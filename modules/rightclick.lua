@@ -76,7 +76,7 @@ function CrossIgnore:ShowWordContextMenu(anchorFrame, entry)
 end
 
 StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
-    text = L["SET_EXPIRATION:"],
+    text = L["SET_EXPIRATION"],
     button1 = L["SET"],
     button2 = L["CANCEL"],
     hasEditBox = true,
@@ -198,3 +198,4 @@ StaticPopupDialogs["CROSSIGNORE_EDIT_NOTE"] = {
     hideOnEscape = true,
     preferredIndex = STATICPOPUP_NUMDIALOGS,
 }
+
