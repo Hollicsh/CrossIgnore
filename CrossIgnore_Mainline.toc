@@ -1,9 +1,10 @@
-## Interface: 110107, 110200
+## Interface: 110200
 ## Title: Cross|cffff7d0aIgnore
 ## Author: Jay
 ## 1.1 Maintainer: Jay @ Tichondrius
 ## Version: 1.1
 ## Notes: Filter and Spam Blocker, also blocks people who ignore you in LFG.
+## Notes-ruRU: Блокировщик спама, который позволяет создать глобальный список игнорирования и прочие спам-фильтры, а также блокирует людей, которые игнорируют Вас в LFG
 ## SavedVariables: CrossIgnoreDB, CrossIgnoreMinimapDB
 ## SavedVariablesPerCharacter: CrossIgnoreSingleDB
 ## IconTexture: Interface\AddOns\CrossGambling\Media\Icon
@@ -20,6 +21,7 @@
 ## Category-zhTW: Cross忽視
 
 Libs.xml
+Locales.lua
 CrossIgnore.lua
 modules/chatfilter.lua
 modules/chatfilterdefaults.lua
