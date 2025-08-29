@@ -1,4 +1,6 @@
 CrossIgnore = LibStub("AceAddon-3.0"):NewAddon("CrossIgnore", "AceConsole-3.0", "AceEvent-3.0")
+local addonName, addonTable = ...
+local L = addonTable.L
 
 local currentRealm = GetNormalizedRealmName()
 
@@ -8,22 +10,22 @@ local options = {
     type = "group",
     args = {
         ui = {
-            name = "Open UI",
-            desc = "Open the CrossIgnore settings UI",
+            name = L["OPEN_UI"],
+            desc = L["OPEN_UI_DESC"],
             type = "execute",
             func = function() CrossIgnore:ToggleGUI() end,
         },
         useGlobalIgnore = {
             type = "toggle",
-            name = "Use Global Ignore",
-            desc = "Enable global ignore (affects all characters)",
+            name = L["USE_GLOBAL_IGNORE"],
+            desc = L["USE_GLOBAL_IGNORE_DESC"],
             get = function() return CrossIgnore.db.profile.settings.useGlobalIgnore end,
             set = function(_, value) CrossIgnore.db.profile.settings.useGlobalIgnore = value end,
         },
         showMinimapIcon = {
             type = "toggle",
-            name = "Show Minimap Icon",
-            desc = "Toggle the CrossIgnore icon on the minimap",
+            name = L["SHOW_MINIMAP_ICON"],
+            desc = L["SHOW_MINIMAP_ICON_DESC"],
             get = function()
                 return not CrossIgnore.iconDB.profile.minimap.hide
             end,
@@ -60,6 +62,8 @@ function CrossIgnore:InitDB()
                     ["Custom"] = {},
                 },
                 selectedChannel = "All Channels",
+				defaultsLoaded = false,
+				removedDefaults = false,
             },
         },
     }, true)
@@ -102,8 +106,8 @@ function CrossIgnore:OnInitialize()
 
     if LFGListFrame and LFGListFrame.SearchPanel then
         LFGListFrame:HookScript("OnHide", function()
-            if CrossIgnore.lfgCache then
-                for k in pairs(CrossIgnore.lfgCache) do CrossIgnore.lfgCache[k] = nil end
+            if LfgCache then
+                for k in pairs(LfgCache) do LfgCache[k] = nil end
             end
         end)
     end
@@ -120,7 +124,7 @@ local LDB = LibStub("LibDataBroker-1.1"):NewDataObject("CrossIgnore", {
     end,
     OnTooltipShow = function(tooltip)
         tooltip:AddLine("CrossIgnore")
-        tooltip:AddLine("Left-Click to open UI", 1, 1, 1)
+        tooltip:AddLine(L["LEFT_CLICK_OPEN_UI"], 1, 1, 1)
     end,
 })
 
@@ -582,15 +586,15 @@ function CrossIgnore:HookFunctions()
                 self:CrossIgnore_LFG_ApplicantMenu(...)
             end)
             LFGListFrame:HookScript("OnShow", function()
-                CrossIgnore.LFGFrameIsOpen = true
+                LFGFrameIsOpen = true
                 CrossIgnore:ClearLFGCache()
             end)
             LFGListFrame:HookScript("OnHide", function()
-                CrossIgnore.LFGFrameIsOpen = false
+                LFGFrameIsOpen = false
                 CrossIgnore:ClearLFGCache()
             end)
             hooksecurefunc("LFGListSearchEntry_Update", function(entry)
-                if not CrossIgnore.LFGFrameIsOpen then return end
+                if not LFGFrameIsOpen then return end
                 if not entry.resultID then return end
                 local info = C_LFGList.GetSearchResultInfo(entry.resultID)
                 if not info or not info.leaderName then return end
@@ -605,12 +609,12 @@ function CrossIgnore:HookFunctions()
                 end
             end)
             hooksecurefunc("LFGListSearchEntry_OnEnter", function(selfEntry)
-                if not CrossIgnore.LFGFrameIsOpen then return end
+                if not LFGFrameIsOpen then return end
                 if not selfEntry.resultID then return end
                 local info = C_LFGList.GetSearchResultInfo(selfEntry.resultID)
                 if info and info.leaderName and CrossIgnore:IsPlayerBlocked(info.leaderName) then
                     GameTooltip:AddLine(" ")
-                    GameTooltip:AddLine("|c00ff0000WARNING: Leader is on your ignore list")
+                    GameTooltip:AddLine(L["CI_ALERT_LEADER_BLOCKED"], 1, 0.3, 0.3)
                     GameTooltip:Show()
                 end
             end)

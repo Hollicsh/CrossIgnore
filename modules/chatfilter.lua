@@ -12,7 +12,7 @@ local CHAT_EVENTS = {
     Instance     = { "CHAT_MSG_INSTANCE_CHAT", "CHAT_MSG_INSTANCE_CHAT_LEADER" },
     Battleground = { "CHAT_MSG_BATTLEGROUND", "CHAT_MSG_BATTLEGROUND_LEADER" },
     Emote        = { "CHAT_MSG_EMOTE", "CHAT_MSG_TEXT_EMOTE" },
-    Channel      = { "CHAT_MSG_CHANNEL" }, 
+    Channel      = { "CHAT_MSG_CHANNEL" },
 }
 
 local channelCache = {}
@@ -23,11 +23,10 @@ local function RefreshChannelCache()
     for i = 1, #chList, 3 do
         local num  = tostring(chList[i])
         local name = tostring(chList[i + 1])
-        local formatted = string.format("%d. %s", tonumber(num), name)
-        channelCache[num]               = formatted            
-        channelCache[name:lower()]      = formatted            
-        channelCache[formatted:lower()] = formatted            
-        channelCache[formatted]         = formatted            
+        local cleanName = name:lower()
+        channelCache[num] = cleanName
+        channelCache[cleanName] = cleanName
+        channelCache[name] = cleanName
     end
 end
 
@@ -40,11 +39,13 @@ RefreshChannelCache()
 
 local function NormalizeChannelKey(channel)
     local key = tostring(channel or "All Channels")
-    if key == "" or key == "nil" then return "All Channels" end
-    return channelCache[key:lower()] or key
+    if key == "" or key == "nil" then
+        return "all channels"
+    end
+    local normalized = channelCache[key:lower()] or key
+    return normalized:lower()
 end
-
-function ChatFilter:NormalizeChannelKey(ch) 
+function ChatFilter:NormalizeChannelKey(ch)
     return NormalizeChannelKey(ch)
 end
 
@@ -52,32 +53,22 @@ local function GetChannelCategory(event, ...)
     if event == "CHAT_MSG_CHANNEL" then
         for i = 1, select("#", ...) do
             local a = select(i, ...)
-            if a ~= nil then
-                if type(a) == "number" then
-                    local num = tostring(a)
-                    if channelCache[num] then
-                        return channelCache[num]
-                    end
-                elseif type(a) == "string" then
-                    local lower = a:lower()
-                    if channelCache[lower] then
-                        return channelCache[lower]
-                    end
-                    if channelCache[a] then
-                        return channelCache[a]
-                    end
-                end
+            if type(a) == "string" and a ~= "" then
+                local clean = a:gsub("^%d+%.%s*", ""):lower()
+                return channelCache[clean] or clean
             end
         end
         return nil
     end
+
     for channelName, events in pairs(CHAT_EVENTS) do
         for _, ev in ipairs(events) do
             if ev == event then
-                return channelName
+                return channelName:lower()
             end
         end
     end
+
     return nil
 end
 
@@ -86,7 +77,8 @@ function ChatFilter:GetFilters()
     CrossIgnoreDB.global = CrossIgnoreDB.global or {}
     CrossIgnoreDB.global.filters = CrossIgnoreDB.global.filters or {}
     CrossIgnoreDB.global.filters.words = CrossIgnoreDB.global.filters.words or {}
-    CrossIgnoreDB.global.filters.words["All Channels"] = CrossIgnoreDB.global.filters.words["All Channels"] or {}
+    CrossIgnoreDB.global.filters.words["all channels"] =
+        CrossIgnoreDB.global.filters.words["all channels"] or {}
     return CrossIgnoreDB.global.filters.words
 end
 
@@ -96,31 +88,29 @@ end
 
 local function buildStrictCore(wordLower)
     local chars = {}
-    for c in wordLower:gmatch("[%w]") do
-        chars[#chars+1] = c
+    for c in wordLower:gmatch(".") do
+        chars[#chars+1] = EscapeForPattern(c)
     end
     if #chars == 0 then return nil end
-
     if #chars == 1 then
-        return "%f[%w]" .. chars[1] .. "%f[%W]"
+        return "%f[%z\1-\255]" .. chars[1] .. "%f[%z\1-\255]"
     end
-
-    return table.concat(chars, "[^%w]*")
+    return table.concat(chars, "[%s%p]*")
 end
+
 
 local function buildNonStrictList(wordLower)
     local out = {}
     local exact = EscapeForPattern(wordLower)
-
-    local letters = {}
-    for c in wordLower:gmatch("%a") do
-        letters[#letters+1] = c
+    local chars = {}
+    for c in wordLower:gmatch(".") do
+        chars[#chars+1] = EscapeForPattern(c)
     end
     local spaced
-    if #letters >= 2 then
-        spaced = letters[1]
-        for i = 2, #letters do
-            spaced = spaced .. "%s+" .. letters[i]
+    if #chars >= 2 then
+        spaced = chars[1]
+        for i = 2, #chars do
+            spaced = spaced .. "%s+" .. chars[i]
         end
     end
 
@@ -174,7 +164,6 @@ local function CompilePatterns()
     wipe(compiledMatchers)
 
     local filters = ChatFilter:GetFilters()
-
     for channelKey, list in pairs(filters) do
         if type(list) == "table" and #list > 0 then
             local bucket = {}
@@ -182,13 +171,10 @@ local function CompilePatterns()
                 local wordLower =
                     (type(entry) == "table" and entry.normalized)
                     or (type(entry) == "string" and entry:lower())
-
                 if wordLower and wordLower ~= "" then
                     if type(entry) == "table" and entry.strict then
                         local core = buildStrictCore(wordLower)
-                        if core then
-                            bucket[#bucket+1] = core
-                        end
+                        if core then bucket[#bucket+1] = core end
                     else
                         local plist = buildNonStrictList(wordLower)
                         for i = 1, #plist do
@@ -197,24 +183,25 @@ local function CompilePatterns()
                     end
                 end
             end
-
             if #bucket > 0 then
-                compiledMatchers[channelKey] = buildChannelMatcher(bucket)
+                compiledMatchers[channelKey:lower()] = buildChannelMatcher(bucket)
             end
         end
     end
 end
 
 local function IsFilteredMessage(msg, sender, event, ...)
-    local channelKey = GetChannelCategory(event, ...)
-    if not channelKey then return false end
-    channelKey = NormalizeChannelKey(channelKey)
+    msg = msg or ""
+    sender = sender or ""
 
-    local fnAll  = compiledMatchers["All Channels"]
+    local fnAll = compiledMatchers["all channels"]
     if fnAll and fnAll(msg, sender) then
         return true
     end
 
+    local channelKey = GetChannelCategory(event, ...)
+    if not channelKey then return false end
+    channelKey = NormalizeChannelKey(channelKey):lower()
     local fnChan = compiledMatchers[channelKey]
     if fnChan and fnChan(msg, sender) then
         return true
@@ -224,10 +211,7 @@ local function IsFilteredMessage(msg, sender, event, ...)
 end
 
 local function ChatEventFilter(_, event, msg, sender, ...)
-    if IsFilteredMessage(msg, sender, event, ...) then
-        return true
-    end
-    return false
+    return IsFilteredMessage(msg, sender, event, ...)
 end
 
 function ChatFilter:UpdateEventRegistration()
@@ -238,25 +222,24 @@ function ChatFilter:UpdateEventRegistration()
     end
 
     CompilePatterns()
-    local filters = self:GetFilters()
-
     local haveAny = next(compiledMatchers) ~= nil
     if not haveAny then return end
 
     for channelName, events in pairs(CHAT_EVENTS) do
         local shouldHook = false
+        local keyLower = channelName:lower()
 
-        if compiledMatchers["All Channels"] then
+        if compiledMatchers["all channels"] then
             shouldHook = true
         end
 
-        if not shouldHook and compiledMatchers[channelName] then
+        if not shouldHook and compiledMatchers[keyLower] then
             shouldHook = true
         end
 
         if not shouldHook and channelName == "Channel" then
             for key, _ in pairs(compiledMatchers) do
-                if key ~= "All Channels" and not CHAT_EVENTS[key] then
+                if key ~= "all channels" and not CHAT_EVENTS[key] then
                     shouldHook = true
                     break
                 end
@@ -274,7 +257,7 @@ end
 function ChatFilter:AddWord(word, channel, strict)
     if not word or word == "" then return end
     local filters = self:GetFilters()
-    local key = NormalizeChannelKey(channel or "All Channels")
+    local key = NormalizeChannelKey(channel or "all channels"):lower()
     filters[key] = filters[key] or {}
     local normWord = word:lower()
 
@@ -303,12 +286,11 @@ end
 function ChatFilter:RemoveWord(word, channel)
     if not word or word == "" then return end
     local filters = self:GetFilters()
-    local key = NormalizeChannelKey(channel or "All Channels")
-    local lowered = word:lower()
-
+    local key = NormalizeChannelKey(channel or "all channels"):lower()
     local list = filters[key]
     if not list then return end
 
+    local lowered = word:lower()
     for i = #list, 1, -1 do
         local entry = list[i]
         local normalized = (type(entry) == "table" and entry.normalized) or (type(entry) == "string" and entry:lower()) or ""
@@ -324,7 +306,7 @@ end
 function ChatFilter:SetWordStrict(word, channel, strict)
     if not word or word == "" then return end
     local filters = self:GetFilters()
-    local key = NormalizeChannelKey(channel or "All Channels")
+    local key = NormalizeChannelKey(channel or "all channels"):lower()
     filters[key] = filters[key] or {}
 
     for idx, entry in ipairs(filters[key]) do

@@ -1,0 +1,16 @@
+## Interface: 110200
+## Title: CrossIgnore
+## Author: Jay
+## Version: 1.1
+## Notes: Automatically blocks players who decline your group finder applications.
+## Notes-ruRU: Блокировщик спама, который позволяет создать глобальный список игнорирования и прочие спам-фильтры, а также блокирует людей, которые игнорируют Вас в LFG
+## SavedVariables: CrossIgnoreDB
+## SavedVariablesPerCharacter: CrossIgnoreSingleDB
+
+Libs.xml
+Locales.lua
+CrossIgnore.lua
+modules/chatfilter.lua
+modules/rightclick.lua
+modules/blockhandler.lua
+CrossIgnoreUI.lua

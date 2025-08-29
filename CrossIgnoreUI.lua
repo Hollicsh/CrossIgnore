@@ -1,3 +1,6 @@
+local addonName, addonTable = ...
+local L = addonTable.L
+
 local CrossIgnoreUI = nil
 local selectedPlayer = nil
 local selectedWord = nil
@@ -44,7 +47,7 @@ end
 local function FormatElapsedTime(added)
     local tsNum = tonumber(added)
     if not tsNum or tsNum == 0 then
-        return "N/A"
+        return L["NA_TEXT"]
     end
 
     local elapsed = time() - tsNum
@@ -65,19 +68,19 @@ local function FormatElapsedTime(added)
     elseif minutes > 0 then
         return string.format("%dm", minutes)
     else
-        return "Just now"
+        return L["TIME_HEADER"]
     end
 end
 
 local function FormatExpiresTime(expires)
     local tsNum = tonumber(expires)
     if not tsNum or tsNum == 0 then
-        return "Never"
+        return L["TIME_HEADER2"]
     end
 
     local remaining = tsNum - time()
     if remaining <= 0 then
-        return "Expired"
+        return L["TIME_HEADER3"]
     end
 
     local days = math.floor(remaining / 86400)
@@ -85,22 +88,22 @@ local function FormatExpiresTime(expires)
     local minutes = math.floor((remaining % 3600) / 60)
 
     if days > 0 then
-        return string.format("%dd %dh left", days, hours)
+        return string.format("%dd %dh", days, hours)
     elseif hours > 0 then
-        return string.format("%dh %dm left", hours, minutes)
+        return string.format("%dh %dm", hours, minutes)
     elseif minutes > 0 then
-        return string.format("%dm left", minutes)
+        return string.format("%dm", minutes)
     else
-        return "Soon"
+        return L["TIME_HEADER4"]
     end
 end
 
 local playerColumnMap = {
-    ["Player Name"] = "name",
-    ["Server"] = "server",
-    ["Note"] = "note",
-    ["Added"] = "added",
-    ["Expires"] = "expires",
+    [L["PLAYER_NAME_HEADER"]] = "name",
+    [L["SERVER_HEADER"]] = "server",
+    [L["NOTE_HEADER"]] = "note",
+    [L["ADDED_HEADER"]] = "added",
+    [L["EXPIRES_HEADER"]] = "expires",
 }
 
 local playerSortKey = "name" 
@@ -160,11 +163,11 @@ function CrossIgnore:RefreshBlockedList(filterText)
     end)
 
     if self.counterLabel then
-        self.counterLabel:SetText("Total Blocked Players: " .. #playerList)
+        self.counterLabel:SetText(string.format(L["TOTAL_BLOCKED"], #playerList))
     end
 
     if not UI.header then
-        local headerTitles = { "Player Name", "Server", "Added", "Expires", "Note" }
+        local headerTitles = { L["PLAYER_NAME_HEADER"], L["SERVER_HEADER"], L["ADDED_HEADER"], L["EXPIRES_HEADER"], L["NOTE_HEADER"] }
         local colWidths    = { 60, 100, 90, 80, 70 }
         local xPos = 0
 
@@ -267,7 +270,7 @@ function CrossIgnore:RefreshBlockedList(filterText)
                     if CrossIgnore.ShowContextMenu then
                         CrossIgnore:ShowContextMenu(self, self.entry)
                     else
-                        print("CrossIgnore context menu not loaded.")
+                        print(L["CONTEXT_NOT_LOADED"])
                     end
                 end
             end)
@@ -298,7 +301,7 @@ function CrossIgnore:RefreshBlockedList(filterText)
             if noteText ~= "" then
                 row.cols[5]:SetScript("OnEnter", function(self)
                     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                    GameTooltip:AddLine("Note", 1, 1, 1)
+                    GameTooltip:AddLine(L["NOTE_HEADER"], 1, 1, 1)
                     GameTooltip:AddLine(noteText, nil, nil, nil, true) 
                     GameTooltip:Show()
                 end)
@@ -324,12 +327,12 @@ end
 
 local function RemoveSelectedPlayer()
     if not selectedPlayer and not CrossIgnore.selectedPlayer then
-        print("No valid player selected.")
+        print(L["NO_PLAYER_SELECTED"])
         return
     end
     local p = selectedPlayer or CrossIgnore.selectedPlayer
     if not p or not p.name then
-        print("No valid player selected.")
+        print(L["NO_PLAYER_SELECTED"])
         return
     end
 
@@ -346,9 +349,9 @@ local function RemoveSelectedPlayer()
 end
 
 local wordColumnMap = {
-    ["Banned Words"] = "word",
-    ["Chat Type"] = "channel",
-    ["Strict Ban"] = "strict",
+    [L["BANNED_WORDS_HEADER2"]] = "word",
+    [L["CHAT_TYPE_HEADER"]] = "channel",
+    [L["STRICT_BAN_HEADER"]] = "strict",
 }
 local wordSortKey = "word"
 local wordSortAsc = true
@@ -370,7 +373,7 @@ function CrossIgnore:UpdateWordsList(searchText)
     wipe(UI.wordActiveRows)
 
     if not UI.wordsHeader then
-        local headers = { "Banned Words", "Chat Type", "Strict Ban" }
+        local headers = { L["BANNED_WORDS_HEADER2"], L["CHAT_TYPE_HEADER"], L["STRICT_BAN_HEADER"] }
         local colWidths = { 180, 140, 80 }
         local xPos = 10
 
@@ -497,8 +500,8 @@ function CrossIgnore:UpdateWordsList(searchText)
 		
 		row.strictCheck:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:AddLine("Strict Ban", 1, 1, 1)
-    GameTooltip:AddLine("Blocks the word even if letters/numbers follow it.\nExample: 'wts' will block 'wts', 'wts123', 'wtsepic'.\nNon-Strict only blocks the exact word.", nil, nil, nil, true)
+    GameTooltip:AddLine(L["STRICT_BAN_HEADER"], 1, 1, 1)
+    GameTooltip:AddLine(L["STRICT_BAN_TOOLTIP_TEXT"], nil, nil, nil, true)
     GameTooltip:Show()
 end)
 row.strictCheck:SetScript("OnLeave", function()
@@ -518,7 +521,7 @@ end)
                 if CrossIgnore.ShowWordContextMenu then
                     CrossIgnore:ShowWordContextMenu(self, self.entry)
                 else
-                    print("CrossIgnore word context menu not loaded.")
+                    print(L["WORD_CONTEXT_NOT_LOADED"])
                 end
             end
         end)
@@ -559,10 +562,17 @@ end)
     end
 
     for i, entry in ipairs(filtered) do
-        local row = table.remove(UI.wordRowPool) or CreateRow()
+			local row = table.remove(UI.wordRowPool) or CreateRow()
+		
+			local function CapitalizeWords(str)
+		return (str:gsub("(%a)([%w_']*)", function(first, rest)
+			return first:upper() .. rest:lower()
+		end))
+	end
 
         row.cols[1]:SetText(entry.word)
-        row.cols[2]:SetText(entry.channel)
+        row.cols[2]:SetText(CapitalizeWords(entry.channel))
+
         row.strictCheck:SetChecked(entry.strict)
 
         row.entry = entry
@@ -592,20 +602,50 @@ local function AddNewWord()
     local word = input:GetText()
     if word == "" then return end
 
-    local channel = CrossIgnoreDB.selectedChannel or "All Channels"
+    local channel = CrossIgnoreDB.selectedChannel or "all channels"
     local strict = CrossIgnoreUI.strictCheckBox and CrossIgnoreUI.strictCheckBox:GetChecked()
 
+    channel = CrossIgnore.ChatFilter:NormalizeChannelKey(channel):lower()
     CrossIgnore.ChatFilter:AddWord(word, channel, strict)
     CrossIgnore:UpdateWordsList()
     input:SetText("")
 end
 
 
+
+
+local function UpdateChannelDropdown()
+    local channelList = {
+        L["CHANNEL_ALL"],
+        L["CHANNEL_SAY"], L["CHANNEL_YELL"], L["CHANNEL_WHISPER"],
+        L["CHANNEL_GUILD"], L["CHANNEL_OFFICER"],
+        L["CHANNEL_PARTY"], L["CHANNEL_RAID"], L["CHANNEL_INSTANCE"],
+    }
+
+    local channels = { GetChannelList() }
+    local seen = {}
+
+    for i = 1, #channels, 3 do
+        local channelName = channels[i+1]
+        if channelName then
+            local clean = channelName:gsub("^%d+%.%s*", "") 
+            if not seen[clean:lower()] then
+                table.insert(channelList, clean)
+                seen[clean:lower()] = true
+            end
+        end
+    end
+
+    return channelList
+end
+
+
+
 local function RemoveSelectedWord()
     local sw = CrossIgnore.selectedWord
     if not sw then return end
 
-    local channel = sw.channel or "All Channels"
+    local channel = sw.channel or L["CHANNEL_ALL"]
 
     if CrossIgnore and CrossIgnore.ChatFilter and CrossIgnore.ChatFilter.NormalizeChannelKey then
         channel = CrossIgnore.ChatFilter:NormalizeChannelKey(channel)
@@ -617,29 +657,37 @@ local function RemoveSelectedWord()
     CrossIgnore:UpdateWordsList()
 end
 
-
-
 local function UpdateChannelDropdown()
     local channelList = {
-        "All Channels",
-        "Say", "Yell", "Whisper",
-        "Guild", "Officer",
-        "Party", "Raid", "Instance",
+        L["CHANNEL_ALL"],
+        L["CHANNEL_SAY"], L["CHANNEL_YELL"], L["CHANNEL_WHISPER"],
+        L["CHANNEL_GUILD"], L["CHANNEL_OFFICER"],
+        L["CHANNEL_PARTY"], L["CHANNEL_RAID"], L["CHANNEL_INSTANCE"],
     }
 
     local channels = { GetChannelList() }
+    local seen = {}
+
     for i = 1, #channels, 3 do
         local channelNumber = channels[i]
-        local channelName = channels[i+1]
+        if channelNumber then
+            local name, displayName = GetChannelName(channelNumber)
 
-        if channelNumber and channelName then
-            local formattedName = string.format("%d. %s", channelNumber, channelName)
-            table.insert(channelList, formattedName)
+            local finalName = (type(name) == "string" and name) or displayName
+
+            if finalName then
+                local clean = finalName:gsub("^%d+%.%s*", "") 
+                if not seen[clean:lower()] then
+                    table.insert(channelList, clean)
+                    seen[clean:lower()] = true
+                end
+            end
         end
     end
 
     return channelList
 end
+
 
 local function CreateChannelDropdown(parent)
     local dropdown = CreateFrame("Frame", "CrossIgnoreChannelDropdown", parent, "UIDropDownMenuTemplate")
@@ -661,7 +709,7 @@ local function CreateChannelDropdown(parent)
         if level ~= 1 then return end 
 
         local channels = UpdateChannelDropdown() 
-        local selectedChannel = CrossIgnoreDB.selectedChannel or "All Channels"
+        local selectedChannel = CrossIgnoreDB.selectedChannel or L["CHANNEL_ALL"]
 
         for _, channel in ipairs(channels) do
             local info = UIDropDownMenu_CreateInfo()
@@ -673,14 +721,32 @@ local function CreateChannelDropdown(parent)
         end
     end)
 
-    UIDropDownMenu_SetSelectedValue(dropdown, CrossIgnoreDB.selectedChannel or "All Channels")
-    UIDropDownMenu_SetText(dropdown, CrossIgnoreDB.selectedChannel or "All Channels")
+    UIDropDownMenu_SetSelectedValue(dropdown, CrossIgnoreDB.selectedChannel or L["CHANNEL_ALL"])
+    UIDropDownMenu_SetText(dropdown, CrossIgnoreDB.selectedChannel or L["CHANNEL_ALL"])
 
     return dropdown
 end
 
 function CrossIgnore:CreateUI()
     if CrossIgnoreUI then return end
+
+    StaticPopupDialogs = StaticPopupDialogs or {}
+    StaticPopupDialogs["CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS"] = {
+        text = L["REMOVE_ALL_CONFIRM"],
+        button1 = L["YES_BUTTON"],
+        button2 = L["NO_BUTTON"],
+        OnAccept = function()
+            if CrossIgnoreDB and CrossIgnoreDB.global and CrossIgnoreDB.global.filters then
+                CrossIgnoreDB.global.filters.words = {}
+				CrossIgnoreDB.global.filters.removedDefaults = true
+            end
+            print(L["REMOVE_ALL_DONE"])
+            CrossIgnore:UpdateWordsList()
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+    }
 
     CrossIgnoreUI = CreateFrame("Frame", "CrossIgnoreUI", UIParent, "BackdropTemplate")
     CrossIgnoreUI:SetSize(630, 520)
@@ -697,9 +763,9 @@ function CrossIgnore:CreateUI()
     CrossIgnoreUI:SetScript("OnDragStart", CrossIgnoreUI.StartMoving)
     CrossIgnoreUI:SetScript("OnDragStop", CrossIgnoreUI.StopMovingOrSizing)
 
-    local title = CreateLabel(CrossIgnoreUI, "Cross Ignore LFG", "TOP", 0, -12, "GameFontHighlightLarge")
+    local title = CreateLabel(CrossIgnoreUI, L["TITLE_HEADER"], "TOP", 0, -12, "GameFontHighlightLarge")
 
-    local closeButton = CreateButton(CrossIgnoreUI, "Close", "TOPRIGHT", -10, -10, 70, 25, function()
+    local closeButton = CreateButton(CrossIgnoreUI, L["CLOSE_BUTTON"], "TOPRIGHT", -10, -10, 70, 25, function()
         CrossIgnoreUI:Hide()
     end)
 
@@ -713,9 +779,9 @@ function CrossIgnore:CreateUI()
     leftPanel:SetPoint("TOPLEFT", 10, -40)
     leftPanel:SetSize(140, 460)
 
-    local ignoreListBtn = CreateButton(leftPanel, "Ignore List", "TOP", 0, -10, 120, 40)
-    local chatfilterBtn = CreateButton(leftPanel, "Chat Filter", "TOP", 0, -60, 120, 40)
-    local optionsBtn = CreateButton(leftPanel, "Options", "TOP", 0, -110, 120, 40)
+    local ignoreListBtn = CreateButton(leftPanel, L["IGNORE_LIST_HEADER"], "TOP", 0, -10, 120, 40)
+    local chatfilterBtn = CreateButton(leftPanel, L["CHAT_FILTER_HEADER"], "TOP", 0, -60, 120, 40)
+    local optionsBtn = CreateButton(leftPanel, L["OPTIONS_HEADER"], "TOP", 0, -110, 120, 40)
 
     local rightPanel = CreateFrame("Frame", nil, CrossIgnoreUI, "BackdropTemplate")
     rightPanel:SetBackdrop({
@@ -734,7 +800,7 @@ function CrossIgnore:CreateUI()
 
 	local placeholderIgnore = searchBoxIgnore:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 	placeholderIgnore:SetPoint("LEFT", searchBoxIgnore, "LEFT", 6, 0)
-	placeholderIgnore:SetText("Search...")
+	placeholderIgnore:SetText(L["SEARCH_PLACEHOLDER"])
 	
 	searchBoxIgnore:SetScript("OnTextChanged", function(self)
 		local text = self:GetText()
@@ -758,13 +824,13 @@ function CrossIgnore:CreateUI()
 		end
 	end)
 
-    local counterLabel = CreateLabel(ignoreListPanel, "Total Blocked Players: 0", "TOPLEFT", 10, -45, "GameFontNormal")
+    local counterLabel = CreateLabel(ignoreListPanel, string.format(L["TOTAL_BLOCKED"], 0), "TOPLEFT", 10, -45, "GameFontNormal")
     CrossIgnore.counterLabel = counterLabel
 
     local scrollFrameIgnore, scrollChildIgnore = CreateScrollFrame(ignoreListPanel, 410, 350, "TOPLEFT", 10, -70)
     scrollChildIgnore:SetSize(410, 800)
 
-    local accountWideLabel = CreateLabel(ignoreListPanel, "Account Wide Ignore", "TOPRIGHT", -50, -43, "GameFontNormal")
+    local accountWideLabel = CreateLabel(ignoreListPanel, L["ACCOUNT_WIDE_LABEL"], "TOPRIGHT", -50, -43, "GameFontNormal")
     local accountWideCheckbox = CreateFrame("CheckButton", "CrossIgnoreAccountWideCheckbox", ignoreListPanel, "ChatConfigCheckButtonTemplate")
     accountWideCheckbox:SetPoint("LEFT", accountWideLabel, "RIGHT", 10, 0)
     accountWideCheckbox:SetChecked(CrossIgnore.charDB.profile.settings.useGlobalIgnore)
@@ -776,7 +842,7 @@ function CrossIgnore:CreateUI()
         end
     end)
 
-    local removeButtonIgnore = CreateButton(ignoreListPanel, "Remove Selected", "BOTTOM", 0, 15, 180, 30, RemoveSelectedPlayer)
+    local removeButtonIgnore = CreateButton(ignoreListPanel, L["REMOVE_SELECTED_BTN"], "BOTTOM", 0, 15, 180, 30, RemoveSelectedPlayer)
 
     CrossIgnoreUI.searchBox = searchBoxIgnore
     CrossIgnoreUI.scrollFrame = scrollFrameIgnore
@@ -786,14 +852,14 @@ function CrossIgnore:CreateUI()
     local chatFilterPanel = CreateFrame("Frame", nil, rightPanel)
     chatFilterPanel:SetAllPoints()
 
-    local filterTitle = CreateLabel(chatFilterPanel, "Chat Filter - Blocked Words", "TOP", 0, -12, "GameFontHighlightLarge")
+    local filterTitle = CreateLabel(chatFilterPanel, L["CHAT_FILTER_TITLE"], "TOP", 0, -12, "GameFontHighlightLarge")
 
 	local searchBoxChat = CreateEditBox(chatFilterPanel, 425, 24, "TOPLEFT", 15, -25)
 	searchBoxChat:SetAutoFocus(false)
 
 	local placeholder = searchBoxChat:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 	placeholder:SetPoint("LEFT", searchBoxChat, "LEFT", 6, 0)
-	placeholder:SetText("Search...")
+	placeholder:SetText(L["SEARCH_PLACEHOLDER"])
 
 	searchBoxChat:SetScript("OnTextChanged", function(self)
 		local text = self:GetText()
@@ -824,23 +890,34 @@ function CrossIgnore:CreateUI()
     CrossIgnoreUI.wordsScrollFrame = wordsScrollFrame
     CrossIgnoreUI.wordsScrollChild = wordsScrollChild
 
-    local inputLabel = CreateLabel(chatFilterPanel, "Add New Word:", "BOTTOMLEFT", 10, 100)
-    local newWordInput = CreateEditBox(chatFilterPanel, 200, 24, "BOTTOMLEFT", 10, 70)
+    local inputLabel = CreateLabel(chatFilterPanel, L["ADD_NEW_WORD_LABEL"], "BOTTOMLEFT", 10, 100)
+    local newWordInput = CreateEditBox(chatFilterPanel, 200, 24, "BOTTOMLEFT", 15, 70)
     newWordInput:SetAutoFocus(false)
     CrossIgnoreUI.newWordInput = newWordInput
 
-    local channelDropdown = CreateChannelDropdown(chatFilterPanel, "", "BOTTOMLEFT", 150, 70, 100, 24)
-	CrossIgnoreUI.channelDropdown = channelDropdown
+    local channelDropdown = CreateChannelDropdown(chatFilterPanel)
 	channelDropdown:ClearAllPoints()
-	channelDropdown:SetPoint("BOTTOMLEFT", inputLabel, "BOTTOMLEFT", -25, -60)
+	channelDropdown:SetPoint("LEFT", newWordInput, "RIGHT", -10, -4)
+	CrossIgnoreUI.channelDropdown = channelDropdown
 
-    local addWordBtn = CreateButton(chatFilterPanel, "Add Word", "BOTTOMLEFT", 330, 70, 90, 24, function()
+    local addWordBtn = CreateButton(chatFilterPanel, L["ADD_WORD_BTN"], "BOTTOMLEFT", 10, 40, 90, 24, function()
         AddNewWord()
     end)
+    addWordBtn:SetNormalFontObject("GameFontNormalSmall")
+    addWordBtn:SetHighlightFontObject("GameFontHighlightSmall")
     CrossIgnoreUI.chatFilterAddBtn = addWordBtn
 
-    local removeWordBtn = CreateButton(chatFilterPanel, "Remove Word", "BOTTOMLEFT", 330, 40, 90, 24, RemoveSelectedWord)
+    local removeWordBtn = CreateButton(chatFilterPanel, L["REMOVE_WORD_BTN"], "BOTTOMLEFT", 100, 40, 90, 24, RemoveSelectedWord)
+    removeWordBtn:SetNormalFontObject("GameFontNormalSmall")
+    removeWordBtn:SetHighlightFontObject("GameFontHighlightSmall")
     CrossIgnoreUI.chatFilterRemoveBtn = removeWordBtn
+
+    local removeAllBtn = CreateButton(chatFilterPanel, L["REMOVE_ALL_BTN"], "BOTTOMLEFT", 190, 40, 90, 24, function()
+        StaticPopup_Show("CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS")
+    end)
+    removeAllBtn:SetNormalFontObject("GameFontNormalSmall")
+    removeAllBtn:SetHighlightFontObject("GameFontHighlightSmall")
+    CrossIgnoreUI.chatFilterRemoveAllBtn = removeAllBtn
 
     CrossIgnoreUI.wordsScrollFrame = wordsScrollFrame
     CrossIgnoreUI.wordsScrollChild = wordsScrollChild

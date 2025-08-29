@@ -1,32 +1,55 @@
 function CrossIgnore:LoadDefaultBlockedWords()
     local filters = self.ChatFilter:GetFilters()
+    local oldKey, newKey = "4. Services", "trade (services) - city"
 
-    if filters.defaultsLoaded then
-        return
-    end
+    filters[newKey] = filters[newKey] or {}
 
-    local defaultBlockedWords = {
-        ["4. Services"] = { "WTS", "WTB", "BOOST", "CARRY" },
-    }
+    if filters[oldKey] then
+        for _, entry in ipairs(filters[oldKey]) do
+            local word = type(entry) == "table" and entry.word or entry
+            local strict = type(entry) == "table" and entry.strict or true
+            local normalized = word:lower()
 
-    for channel, words in pairs(defaultBlockedWords) do
-        filters[channel] = filters[channel] or {}
-        local existing = {}
-        for _, entry in ipairs(filters[channel]) do
-            local word = type(entry) == "table" and entry.normalized or entry
-            if word then existing[word:lower()] = true end
-        end
+            local exists = false
+            for _, e in ipairs(filters[newKey]) do
+                local n = type(e) == "table" and e.normalized or e
+                if n and n:lower() == normalized then
+                    exists = true
+                    break
+                end
+            end
 
-        for _, word in ipairs(words) do
-            if not existing[word:lower()] then
-                table.insert(filters[channel], {
+            if not exists then
+                table.insert(filters[newKey], {
                     word       = word,
-                    normalized = word:lower(),
-                    strict     = true, 
+                    normalized = normalized,
+                    strict     = strict,
                 })
             end
         end
+        filters[oldKey] = nil 
     end
 
-    filters.defaultsLoaded = true
+    if not filters.defaultsLoaded and not filters.removedDefaults then
+        local wordsToBlock = { "WTS", "WTB", "BOOST", "CARRY" }
+        local existing = {}
+        for _, entry in ipairs(filters[newKey]) do
+            local n = type(entry) == "table" and entry.normalized or entry
+            if n then existing[n:lower()] = true end
+        end
+
+        for _, word in ipairs(wordsToBlock) do
+            local lower = word:lower()
+            if not existing[lower] then
+                table.insert(filters[newKey], {
+                    word       = word,
+                    normalized = lower,
+                    strict     = true,
+                })
+                existing[lower] = true
+            end
+        end
+        filters.defaultsLoaded = true
+    end
 end
+

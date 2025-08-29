@@ -1,3 +1,6 @@
+local addonName, addonTable = ...
+local L = addonTable.L
+
 local function CreateStyledMenuFrame(name)
     local frame = CreateFrame("Frame", name, UIParent, "UIDropDownMenuTemplate")
     frame:SetFrameStrata("TOOLTIP")
@@ -27,26 +30,26 @@ CrossIgnoreFilterDropdown = CreateStyledMenuFrame("CrossIgnoreFilterDropdown")
 function CrossIgnore:ShowContextMenu(anchorFrame, playerData)
     local menuItems = {
         {
-            text = "Edit Note",
+            text = L["EDIT_NOTE"],
             func = function()
                 StaticPopup_Show("CROSSIGNORE_EDIT_NOTE", playerData.name or "Unknown", nil, playerData)
             end
         },
         {
-            text = "Set Expiry",
+            text = L["SET_EXPIRY"],
             func = function()
                 StaticPopup_Show("CROSSIGNORE_SET_EXPIRE", playerData.name or "Unknown", nil, playerData)
             end
         },
         {
-            text = "Remove Entry",
+            text = L["REMOVE_ENTRY"],
             func = function()
                 local fullName = playerData.name .. (playerData.server and playerData.server ~= "" and ("-" .. playerData.server) or "")
                 CrossIgnore:DelIgnore(fullName)
                 CrossIgnore:RefreshBlockedList()
             end
         },
-        { text = "Cancel", func = function() end }
+        { text = L["CANCEL"], func = function() end }
     }
 
     ShowStyledDropdown(CrossIgnorePlayerDropdown, menuItems, anchorFrame)
@@ -55,27 +58,27 @@ end
 function CrossIgnore:ShowWordContextMenu(anchorFrame, entry)
     local menuItems = {
         {
-            text = "Edit Word",
+            text = L["EDIT_WORD"],
             func = function()
                 StaticPopup_Show("CROSSIGNORE_EDIT_WORD", entry.word or "Unknown", nil, entry)
             end
         },
         {
-            text = "Remove Word",
+            text = L["REMOVE_WORD"],
             func = function()
                 CrossIgnore:RemoveSelectedWord(entry)
             end
         },
-        { text = "Cancel", func = function() end }
+        { text = L["CANCEL"], func = function() end }
     }
 
     ShowStyledDropdown(CrossIgnoreFilterDropdown, menuItems, anchorFrame)
 end
 
 StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
-    text = "Set expiration for %s (in days):",
-    button1 = "Set",
-    button2 = "Cancel",
+    text = L["SET_EXPIRATION:"],
+    button1 = L["SET"],
+    button2 = L["CANCEL"],
     hasEditBox = true,
     OnShow = function(self)
         local editBox = self.editBox or _G[self:GetName().."EditBox"]
@@ -112,9 +115,9 @@ StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
 
 
 StaticPopupDialogs["CROSSIGNORE_EDIT_WORD"] = {
-    text = "Edit blocked word:",
-    button1 = "Save",
-    button2 = "Cancel",
+    text = L["EDIT_BLOCKED_WORD"],
+    button1 = L["SAVE"],
+    button2 = L["CANCEL"],
     hasEditBox = true,
     OnShow = function(self)
         local editBox = self.editBox or _G[self:GetName().."EditBox"]
@@ -157,9 +160,9 @@ StaticPopupDialogs["CROSSIGNORE_EDIT_WORD"] = {
 
 
 StaticPopupDialogs["CROSSIGNORE_EDIT_NOTE"] = {
-    text = "Edit Note for %s:",
-    button1 = "Save",
-    button2 = "Cancel",
+    text = L["EDIT_NOTE_FOR"],
+    button1 = L["SAVE"],
+    button2 = L["CANCEL"],
     hasEditBox = true,
     OnShow = function(self)
         local editBox = self.editBox or _G[self:GetName().."EditBox"]
