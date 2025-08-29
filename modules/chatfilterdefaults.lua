@@ -1,6 +1,11 @@
+local addonName, addonTable = ...
+local L = addonTable.L
+
 function CrossIgnore:LoadDefaultBlockedWords()
     local filters = self.ChatFilter:GetFilters()
-    local oldKey, newKey = "4. Services", "trade (services) - city"
+    local L = addonTable.L  
+
+    local oldKey, newKey = L.OLD_CHANNEL_SERVICES, L.CHANNEL_SERVICES
 
     filters[newKey] = filters[newKey] or {}
 
@@ -31,7 +36,7 @@ function CrossIgnore:LoadDefaultBlockedWords()
     end
 
     if not filters.defaultsLoaded and not filters.removedDefaults then
-        local wordsToBlock = { "WTS", "WTB", "BOOST", "CARRY" }
+        local wordsToBlock = { "WTS", "WTB", "BOOST", "CARRY", "STARTING NOW", "GOOD PRICES" }
         local existing = {}
         for _, entry in ipairs(filters[newKey]) do
             local n = type(entry) == "table" and entry.normalized or entry
@@ -52,4 +57,3 @@ function CrossIgnore:LoadDefaultBlockedWords()
         filters.defaultsLoaded = true
     end
 end
-

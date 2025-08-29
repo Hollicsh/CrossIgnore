@@ -100,7 +100,7 @@ StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
             name = targetName,
             server = targetServer,
             expires = expiresAt,
-			lastModifiedExpires = time(),
+            lastModifiedExpires = time(),
         }
 
         CrossIgnore:EnsureGlobalPresence(entry, CrossIgnore.charDB.profile.settings.maxIgnoreLimit or 50)
@@ -112,7 +112,6 @@ StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
     hideOnEscape = true,
     preferredIndex = STATICPOPUP_NUMDIALOGS,
 }
-
 
 StaticPopupDialogs["CROSSIGNORE_EDIT_WORD"] = {
     text = L["EDIT_BLOCKED_WORD"],
@@ -157,8 +156,6 @@ StaticPopupDialogs["CROSSIGNORE_EDIT_WORD"] = {
     preferredIndex = STATICPOPUP_NUMDIALOGS,
 }
 
-
-
 StaticPopupDialogs["CROSSIGNORE_EDIT_NOTE"] = {
     text = L["EDIT_NOTE_FOR"],
     button1 = L["SAVE"],
@@ -181,7 +178,7 @@ StaticPopupDialogs["CROSSIGNORE_EDIT_NOTE"] = {
             for _, entry in ipairs(list) do
                 if entry.name == targetName and entry.server == targetServer then
                     entry.note = newNote
-					entry.lastModifiedNote = time() 
+                    entry.lastModifiedNote = time()
                 end
             end
         end
@@ -189,7 +186,7 @@ StaticPopupDialogs["CROSSIGNORE_EDIT_NOTE"] = {
         updateNoteInList(CrossIgnore.charDB.profile.players or {})
         updateNoteInList(CrossIgnore.charDB.profile.overLimitPlayers or {})
         updateNoteInList(CrossIgnore.globalDB.global.players or {})
-		updateNoteInList(CrossIgnore.globalDB.global.overLimitPlayers or {})
+        updateNoteInList(CrossIgnore.globalDB.global.overLimitPlayers or {})
 
         CrossIgnore:RefreshBlockedList()
     end,
@@ -199,3 +196,21 @@ StaticPopupDialogs["CROSSIGNORE_EDIT_NOTE"] = {
     preferredIndex = STATICPOPUP_NUMDIALOGS,
 }
 
+
+function CrossIgnore:RemoveSelectedWord(entry)
+    if not entry then return end
+
+    local word = entry.word or entry.normalized
+    if not word or word == "" then return end
+
+    local channel = entry.channel or entry.channelName or L["CHANNEL_ALL"]
+    if self.ChatFilter and self.ChatFilter.NormalizeChannelKey then
+        channel = self.ChatFilter:NormalizeChannelKey(channel)
+    end
+
+    if self.ChatFilter then
+        self.ChatFilter:RemoveWord(word, channel)
+    end
+
+    self:UpdateWordsList(_G.CrossIgnoreUI and _G.CrossIgnoreUI.searchBox:GetText() or "")
+end
