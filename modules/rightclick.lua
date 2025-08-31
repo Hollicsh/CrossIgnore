@@ -1,14 +1,18 @@
 local addonName, addonTable = ...
 local L = addonTable.L
 
-local function CreateStyledMenuFrame(name)
-    local frame = CreateFrame("Frame", name, UIParent, "UIDropDownMenuTemplate")
+-- Create a local dropdown frame to prevent taint
+local function CreateStyledMenuFrame()
+    local frame = CreateFrame("Frame", nil, UIParent, "UIDropDownMenuTemplate")
     frame:SetFrameStrata("TOOLTIP")
     frame:Hide()
     return frame
 end
 
-local function ShowStyledDropdown(menuFrame, items, anchorFrame)
+-- Show a dropdown menu with given items anchored to a frame
+local function ShowStyledDropdown(items, anchorFrame)
+    local menuFrame = CreateStyledMenuFrame()
+
     local function initialize(self, level)
         if not level then return end
         for _, item in ipairs(items) do
@@ -24,9 +28,7 @@ local function ShowStyledDropdown(menuFrame, items, anchorFrame)
     ToggleDropDownMenu(1, nil, menuFrame, anchorFrame, 0, 0)
 end
 
-CrossIgnorePlayerDropdown = CreateStyledMenuFrame("CrossIgnorePlayerDropdown")
-CrossIgnoreFilterDropdown = CreateStyledMenuFrame("CrossIgnoreFilterDropdown")
-
+-- Player context menu
 function CrossIgnore:ShowContextMenu(anchorFrame, playerData)
     local menuItems = {
         {
@@ -52,9 +54,10 @@ function CrossIgnore:ShowContextMenu(anchorFrame, playerData)
         { text = L["CANCEL"], func = function() end }
     }
 
-    ShowStyledDropdown(CrossIgnorePlayerDropdown, menuItems, anchorFrame)
+    ShowStyledDropdown(menuItems, anchorFrame)
 end
 
+-- Word context menu
 function CrossIgnore:ShowWordContextMenu(anchorFrame, entry)
     local menuItems = {
         {
@@ -72,9 +75,10 @@ function CrossIgnore:ShowWordContextMenu(anchorFrame, entry)
         { text = L["CANCEL"], func = function() end }
     }
 
-    ShowStyledDropdown(CrossIgnoreFilterDropdown, menuItems, anchorFrame)
+    ShowStyledDropdown(menuItems, anchorFrame)
 end
 
+-- Static popups
 StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
     text = L["SET_EXPIRATION"],
     button1 = L["SET"],
@@ -147,7 +151,6 @@ StaticPopupDialogs["CROSSIGNORE_EDIT_WORD"] = {
         end
 
         self.data.word = newWord
-
         CrossIgnore:UpdateWordsList(_G.CrossIgnoreUI.searchBox:GetText() or "")
     end,
     timeout = 0,
@@ -196,7 +199,7 @@ StaticPopupDialogs["CROSSIGNORE_EDIT_NOTE"] = {
     preferredIndex = STATICPOPUP_NUMDIALOGS,
 }
 
-
+-- Remove a blocked word
 function CrossIgnore:RemoveSelectedWord(entry)
     if not entry then return end
 

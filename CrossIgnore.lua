@@ -569,14 +569,27 @@ function CrossIgnore:ClearLFGCache()
 end
 
 function CrossIgnore:ShowBlockedIconOnTooltip()
-    GameTooltip:HookScript("OnTooltipSetUnit", function(tooltip)
-        local name, realm = UnitName("mouseover")
-        if not name then return end
-        local fullName = realm and (name .. "-" .. realm) or name
-        if CrossIgnore:IsPlayerBlocked(fullName) then
-            tooltip:AddLine("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_7:16|t |cffff0000Ignored by CrossIgnore")
-        end
+    if TooltipDataProcessor and Enum and Enum.TooltipDataType then
+        TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tooltip)
+            local _, unit = tooltip:GetUnit()
+            if unit and UnitIsPlayer(unit) then
+                local name, realm = UnitName(unit)
+                if name then
+                    addon:CheckTooltipForIgnoredPlayer(tooltip, name, realm)
+                end
+            end
+        end)
+    else
+        GameTooltip:HookScript("OnTooltipSetUnit", function(tooltip)
+            local _, unit = tooltip:GetUnit()
+            if unit and UnitIsPlayer(unit) then
+                local name, realm = UnitName(unit)
+                if name then
+                    addon:CheckTooltipForIgnoredPlayer(tooltip, name, realm)
+                end
+            end
     end)
+	end
 end
 
 function CrossIgnore:HookFunctions()
