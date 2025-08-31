@@ -25,6 +25,7 @@ local Locales = {
         BANNED_WORDS_HEADER2 = "Banned Words",
         CHAT_TYPE_HEADER     = "Chat Type",
         STRICT_BAN_HEADER    = "Strict Ban",
+		-- CHANNEL_SERVICES must always be lowercase
 		CHANNEL_SERVICES     = "trade (services) - city",
 		OLD_CHANNEL_SERVICES = "4. Services",
 
@@ -106,7 +107,8 @@ local Locales = {
         BANNED_WORDS_HEADER2 = "Запрещенные слова",
         CHAT_TYPE_HEADER     = "Тип чата",
         STRICT_BAN_HEADER    = "Строгий запрет",
-		CHANNEL_SERVICES     = "Торговля (услуги): Город",
+		-- CHANNEL_SERVICES must always be lowercase
+		CHANNEL_SERVICES     = "торговля (услуги): город",
 		OLD_CHANNEL_SERVICES = "4. Услуги",
 
         STRICT_BAN_TOOLTIP_TITLE = "Строгий запрет",
