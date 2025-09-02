@@ -531,7 +531,8 @@ function CrossIgnore:AddOrDelIgnore(name)
         self:AddIgnore(name)
     end
     self:RefreshBlockedList()
-    if self.db.profile.settings.LFGBlock and LFGListFrame and LFGListFrame.SearchPanel and LFGListFrame.SearchPanel:IsShown() then
+
+    if LFGListFrame and LFGListFrame.SearchPanel and LFGListFrame.SearchPanel:IsShown() then
         LFGListSearchPanel_UpdateResults(LFGListFrame.SearchPanel)
     end
 end
@@ -594,10 +595,11 @@ end
 
 function CrossIgnore:HookFunctions()
     if Menu and Menu.ModifyMenu then
-        if self.db.profile.settings.LFGBlock and LFGListFrame then
+        if LFGListFrame then
             Menu.ModifyMenu("MENU_LFG_FRAME_SEARCH_ENTRY", function(...)
                 self:CrossIgnore_LFG_ApplicantMenu(...)
             end)
+
             LFGListFrame:HookScript("OnShow", function()
                 LFGFrameIsOpen = true
                 CrossIgnore:ClearLFGCache()
@@ -606,24 +608,25 @@ function CrossIgnore:HookFunctions()
                 LFGFrameIsOpen = false
                 CrossIgnore:ClearLFGCache()
             end)
+
             hooksecurefunc("LFGListSearchEntry_Update", function(entry)
-                if not LFGFrameIsOpen then return end
-                if not entry.resultID then return end
+                if not LFGFrameIsOpen or not entry.resultID then return end
                 local info = C_LFGList.GetSearchResultInfo(entry.resultID)
-                if not info or not info.leaderName then return end
-                if CrossIgnore:IsPlayerBlocked(info.leaderName) then
-                    if not entry.Backdrop then
-                        entry.Backdrop = entry:CreateTexture(nil, "BACKGROUND")
-                        entry.Backdrop:SetAllPoints(entry)
+                if info and info.leaderName then
+                    if CrossIgnore:IsPlayerBlocked(info.leaderName) then
+                        if not entry.Backdrop then
+                            entry.Backdrop = entry:CreateTexture(nil, "BACKGROUND")
+                            entry.Backdrop:SetAllPoints(entry)
+                        end
+                        entry.Backdrop:SetColorTexture(1, 0, 0, 0.3)
+                    elseif entry.Backdrop then
+                        entry.Backdrop:SetColorTexture(0, 0, 0, 0)
                     end
-                    entry.Backdrop:SetColorTexture(1, 0, 0, 0.3)
-                else
-                    if entry.Backdrop then entry.Backdrop:SetColorTexture(0, 0, 0, 0) end
                 end
             end)
+
             hooksecurefunc("LFGListSearchEntry_OnEnter", function(selfEntry)
-                if not LFGFrameIsOpen then return end
-                if not selfEntry.resultID then return end
+                if not LFGFrameIsOpen or not selfEntry.resultID then return end
                 local info = C_LFGList.GetSearchResultInfo(selfEntry.resultID)
                 if info and info.leaderName and CrossIgnore:IsPlayerBlocked(info.leaderName) then
                     GameTooltip:AddLine(" ")
@@ -649,6 +652,16 @@ function CrossIgnore:HookFunctions()
         end)
     end
 end
+
+function CrossIgnore:OnLFGDecline(event, id, status)
+    if self.db.profile.settings.LFGBlock and status == "declined" then
+        local info = C_LFGList.GetSearchResultInfo(id)
+        if info and info.leaderName then
+            self:AddIgnore(info.leaderName)
+        end
+    end
+end
+
 
 function CrossIgnore:CheckExpiredIgnores()
     local now = time()
