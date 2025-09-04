@@ -172,11 +172,11 @@ local Locales = {
 		OPEN_UI_DESC = "Открыть интерфейс настроек CrossIgnore",
 
 
-        DEFAULT_EXPIRE_LABEL   = "",
-        DEFAULT_EXPIRE_SET     = "",
-        DEFAULT_EXPIRE_APPLIED = "",
-        PLAYER_EXPIRE_SET      = "",
-        NEVER                  = "",
+        DEFAULT_EXPIRE_LABEL   = "Срок действия по умолчанию (дней, 0 = никогда):",
+        DEFAULT_EXPIRE_SET     = "Срок действия по умолчанию установлен на %s",
+        DEFAULT_EXPIRE_APPLIED = "Примененный по умолчанию срок действия %d дней",
+        PLAYER_EXPIRE_SET      = "Установленный срок действия для %s: %s",
+        NEVER                  = "Никогда",
 	},
 }
 
