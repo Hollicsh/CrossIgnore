@@ -30,7 +30,7 @@ local Locales = {
 		OLD_CHANNEL_SERVICES = "4. Services",
 
         STRICT_BAN_TOOLTIP_TITLE = "Strict Ban",
-        STRICT_BAN_TOOLTIP_TEXT  = "Blocks the word even if letters/numbers follow it.\nExample: 'wts' will block 'wts', 'wts123', 'wtsepic'.\\nNon-Strict only blocks the exact word.",
+        STRICT_BAN_TOOLTIP_TEXT  = "Blocks the word even if letters/numbers follow it.\nExample: 'wts' will block 'wts', 'wts123', 'wtsepic'.\nNon-Strict only blocks the exact word.",
 
         CHANNEL_ALL          = "All Channels",
         CHANNEL_SAY          = "Say",
@@ -82,6 +82,12 @@ local Locales = {
 		USE_GLOBAL_IGNORE_DESC = "Enable global ignore (affects all characters)",
 		OPEN_UI = "Open UI",
 		OPEN_UI_DESC = "Open the CrossIgnore settings UI",
+
+        DEFAULT_EXPIRE_LABEL   = "Default Expire (days, 0 = never):",
+        DEFAULT_EXPIRE_SET     = "Default expiration set to %s",
+        DEFAULT_EXPIRE_APPLIED = "Applied default expiration of %d days",
+        PLAYER_EXPIRE_SET      = "Expiration set for %s: %s",
+        NEVER                  = "Never",
     },
 	
 	ruRU = {
@@ -158,15 +164,21 @@ local Locales = {
 		
 		LEFT_CLICK_OPEN_UI = "ЛКМ - открыть окно аддона",
 		CI_ALERT_LEADER_BLOCKED = "|cffff5555Оповещение CrossIgnore: Лидер заблокирован|r",
-		SHOW_MINIMAP_ICON = "Показывать иконку на миникаре",
+		SHOW_MINIMAP_ICON = "Показывать иконку на миникарте",
 		SHOW_MINIMAP_ICON_DESC = "Вкл./Выкл. иконку CrossIgnore на миникарте",
 		USE_GLOBAL_IGNORE = "Использовать глобальное игнорирование",
 		USE_GLOBAL_IGNORE_DESC = "Включить глобальное игнорирование (действует на всех персонажей)",
 		OPEN_UI = "Открыть интерфейс CrossIgnore",
 		OPEN_UI_DESC = "Открыть интерфейс настроек CrossIgnore",
+
+
+        DEFAULT_EXPIRE_LABEL   = "",
+        DEFAULT_EXPIRE_SET     = "",
+        DEFAULT_EXPIRE_APPLIED = "",
+        PLAYER_EXPIRE_SET      = "",
+        NEVER                  = "",
 	},
 }
-
 
 local L = Locales[GetLocale()] or Locales["enUS"]
 

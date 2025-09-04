@@ -386,6 +386,13 @@ function CrossIgnore:UpdateIgnoreList()
                 end
             end
 
+            if existingExpires == 0 then
+                local defaultDays = self.charDB.profile.settings.defaultExpireDays or 0
+                if defaultDays > 0 then
+                    existingExpires = time() + (defaultDays * 86400)
+                end
+            end
+
             local entry = {
                 name     = base,
                 server   = realm,
@@ -409,7 +416,6 @@ function CrossIgnore:UpdateIgnoreList()
         local full = MakeKey(p.name, p.server)
         if not blizzSet[full] then
             table.remove(list, i)
-
             self:RemoveFromAllAddonLists(p.name, p.server)
         end
     end
@@ -417,6 +423,7 @@ function CrossIgnore:UpdateIgnoreList()
     self:SyncLocalToGlobal()
     self:RefreshBlockedList()
 end
+
 
 function CrossIgnore:AddIgnore(name, note, duration)
     if not name or name == "" then return end
@@ -430,19 +437,25 @@ function CrossIgnore:AddIgnore(name, note, duration)
     if self:IsPlayerInAnyList(base, realm) then return end
 
     local maxIgnoreLimit = self.charDB.profile.settings.maxIgnoreLimit or 50
+
     local dur = tonumber(duration)
-    local expiresAt = (dur and dur > 0) and (time() + dur) or 0
+    if not dur then
+        local defaultDays = self.charDB.profile.settings.defaultExpireDays or 0
+        dur = (defaultDays > 0) and (defaultDays * 86400) or 0
+    end
+
+    local expiresAt = (dur > 0) and (time() + dur) or 0
 
     local entry = {
-        name = base,
-        server = realm,
-        added = time(),
-        ignored = true,
-        source = "blizzard",
-        type = "player",
-        note = note or "",
-        expires = expiresAt,
-        addedBy = UnitName("player") .. "-" .. GetNormalizedRealmName(),
+        name       = base,
+        server     = realm,
+        added      = time(),
+        ignored    = true,
+        source     = "blizzard",
+        type       = "player",
+        note       = note or "",
+        expires    = expiresAt,
+        addedBy    = UnitName("player") .. "-" .. GetNormalizedRealmName(),
     }
 
     if #self.charDB.profile.players < maxIgnoreLimit then
@@ -456,8 +469,11 @@ function CrossIgnore:AddIgnore(name, note, duration)
 
     self:EnsureGlobalPresence(entry, maxIgnoreLimit)
 
-    if CrossIgnoreUI and CrossIgnoreUI:IsShown() then self:RefreshBlockedList() end
+    if CrossIgnoreUI and CrossIgnoreUI:IsShown() then
+        self:RefreshBlockedList()
+    end
 end
+
 
 function CrossIgnore:maybeMarkPendingRemoval(base, realm, addedBy)
     local myChar = UnitName("player") .. "-" .. GetNormalizedRealmName()

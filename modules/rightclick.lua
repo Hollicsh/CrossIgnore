@@ -1,7 +1,6 @@
 local addonName, addonTable = ...
 local L = addonTable.L
 
--- Create a local dropdown frame to prevent taint
 local function CreateStyledMenuFrame()
     local frame = CreateFrame("Frame", nil, UIParent, "UIDropDownMenuTemplate")
     frame:SetFrameStrata("TOOLTIP")
@@ -9,7 +8,6 @@ local function CreateStyledMenuFrame()
     return frame
 end
 
--- Show a dropdown menu with given items anchored to a frame
 local function ShowStyledDropdown(items, anchorFrame)
     local menuFrame = CreateStyledMenuFrame()
 
@@ -28,7 +26,6 @@ local function ShowStyledDropdown(items, anchorFrame)
     ToggleDropDownMenu(1, nil, menuFrame, anchorFrame, 0, 0)
 end
 
--- Player context menu
 function CrossIgnore:ShowContextMenu(anchorFrame, playerData)
     local menuItems = {
         {
@@ -57,7 +54,6 @@ function CrossIgnore:ShowContextMenu(anchorFrame, playerData)
     ShowStyledDropdown(menuItems, anchorFrame)
 end
 
--- Word context menu
 function CrossIgnore:ShowWordContextMenu(anchorFrame, entry)
     local menuItems = {
         {
@@ -78,7 +74,6 @@ function CrossIgnore:ShowWordContextMenu(anchorFrame, entry)
     ShowStyledDropdown(menuItems, anchorFrame)
 end
 
--- Static popups
 StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
     text = L["SET_EXPIRATION"],
     button1 = L["SET"],
@@ -87,7 +82,11 @@ StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
     OnShow = function(self)
         local editBox = self.editBox or _G[self:GetName().."EditBox"]
         if editBox then
-            editBox:SetText("7")
+            local defaultDays = CrossIgnore.charDB
+                and CrossIgnore.charDB.profile
+                and CrossIgnore.charDB.profile.settings.defaultExpireDays
+                or 0
+            editBox:SetText(tostring(defaultDays))
             editBox:SetFocus()
         end
     end,
@@ -96,26 +95,30 @@ StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
         local days = tonumber(editBox and editBox:GetText() or "")
         if not days or days < 0 then return end
 
-        local expiresAt = time() + (days * 86400)
+        local expiresAt = (days > 0) and (time() + (days * 86400)) or 0
         local targetName = self.data.name
         local targetServer = self.data.server
 
         local entry = {
-            name = targetName,
-            server = targetServer,
-            expires = expiresAt,
+            name                = targetName,
+            server              = targetServer,
+            expires             = expiresAt,
             lastModifiedExpires = time(),
         }
 
         CrossIgnore:EnsureGlobalPresence(entry, CrossIgnore.charDB.profile.settings.maxIgnoreLimit or 50)
         CrossIgnore:SyncLocalToGlobal()
         CrossIgnore:RefreshBlockedList()
+
+        print(L["PLAYER_EXPIRE_SET"]:format(targetName, (days == 0 and L["NEVER"] or days)))
     end,
     timeout = 0,
     whileDead = true,
     hideOnEscape = true,
     preferredIndex = STATICPOPUP_NUMDIALOGS,
 }
+
+
 
 StaticPopupDialogs["CROSSIGNORE_EDIT_WORD"] = {
     text = L["EDIT_BLOCKED_WORD"],
@@ -199,7 +202,6 @@ StaticPopupDialogs["CROSSIGNORE_EDIT_NOTE"] = {
     preferredIndex = STATICPOPUP_NUMDIALOGS,
 }
 
--- Remove a blocked word
 function CrossIgnore:RemoveSelectedWord(entry)
     if not entry then return end
 

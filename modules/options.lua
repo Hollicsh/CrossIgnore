@@ -27,4 +27,32 @@ function CrossIgnore:CreateOptionsUI(parent)
     lfgCheckbox:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
+
+   local expireLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+   expireLabel:SetPoint("TOPLEFT", lfgLabel, "BOTTOMLEFT", 0, -30)
+   expireLabel:SetText(L["DEFAULT_EXPIRE_LABEL"])
+
+   local expireBox = CreateFrame("EditBox", "CrossIgnoreDefaultExpireBox", parent, "InputBoxTemplate")
+   expireBox:SetSize(50, 20)
+   expireBox:SetPoint("LEFT", expireLabel, "RIGHT", 10, 0)
+   expireBox:SetAutoFocus(false)
+   expireBox:SetNumeric(true)
+
+   local defaultDays = CrossIgnore.charDB.profile.settings.defaultExpireDays or 0
+   expireBox:SetText(tostring(defaultDays))
+
+   local expireOkayBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+   expireOkayBtn:SetSize(60, 22)
+   expireOkayBtn:SetPoint("LEFT", expireBox, "RIGHT", 10, 0)
+   expireOkayBtn:SetText(OKAY)
+
+   expireOkayBtn:SetScript("OnClick", function()
+    local days = tonumber(expireBox:GetText()) or 0
+    if days < 0 then days = 0 end
+    CrossIgnore.charDB.profile.settings.defaultExpireDays = days
+
+    print(L["DEFAULT_EXPIRE_SET"]:format((days == 0 and L["NEVER"] or days)))
+end)
+
+
 end
