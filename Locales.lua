@@ -183,9 +183,9 @@ local Locales = {
         PLAYER_EXPIRE_SET      = "Установленный срок действия для %s: %s",
         NEVER                  = "Никогда",
 		
-		AUTO_REPLY_DEFAULT = "CrossIgnore: You are currently being ignored.",
-		AUTO_REPLY_ENABLE_CHECK = "Enable Auto-Reply",
-		AUTO_REPLY_MESSAGE = "Auto-Reply Message",
+		AUTO_REPLY_DEFAULT = "CrossIgnore: В настоящее время Вас игнорируют.",
+		AUTO_REPLY_ENABLE_CHECK = "Включить автоответ",
+		AUTO_REPLY_MESSAGE = "Автоматический ответ",
 	},
 }
 
