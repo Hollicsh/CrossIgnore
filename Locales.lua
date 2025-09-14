@@ -88,6 +88,11 @@ local Locales = {
         DEFAULT_EXPIRE_APPLIED = "Applied default expiration of %d days",
         PLAYER_EXPIRE_SET      = "Expiration set for %s: %s",
         NEVER                  = "Never",
+		
+		AUTO_REPLY_DEFAULT = "CrossIgnore: You are currently being ignored.",
+		AUTO_REPLY_ENABLE_CHECK = "Enable Auto-Reply",
+		AUTO_REPLY_MESSAGE = "Auto-Reply Message",
+
     },
 	
 	ruRU = {
@@ -177,6 +182,10 @@ local Locales = {
         DEFAULT_EXPIRE_APPLIED = "Примененный по умолчанию срок действия %d дней",
         PLAYER_EXPIRE_SET      = "Установленный срок действия для %s: %s",
         NEVER                  = "Никогда",
+		
+		AUTO_REPLY_DEFAULT = "CrossIgnore: You are currently being ignored.",
+		AUTO_REPLY_ENABLE_CHECK = "Enable Auto-Reply",
+		AUTO_REPLY_MESSAGE = "Auto-Reply Message",
 	},
 }
 

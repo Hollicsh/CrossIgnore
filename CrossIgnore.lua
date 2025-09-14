@@ -75,6 +75,8 @@ function CrossIgnore:InitDB()
                 UnitBlock = true,
                 useGlobalIgnore = false,
                 maxIgnoreLimit = 50,
+				autoReplyEnabled = true,
+				autoReplyMessage = L["AUTO_REPLY_DEFAULT"]
             },
             players = {},
             overLimitPlayers = {},
@@ -276,8 +278,6 @@ function CrossIgnore:EnsureGlobalPresence(entry, maxIgnoreLimit)
     end
 end
 
-
-
 function CrossIgnore:SyncLocalToGlobal()
     local max = (self.charDB.profile.settings and self.charDB.profile.settings.maxIgnoreLimit) or 50
     self.charDB.profile.players = self.charDB.profile.players or {}
@@ -292,9 +292,6 @@ function CrossIgnore:SyncLocalToGlobal()
         self:EnsureGlobalPresence(entry, max)
     end
 end
-
-
-
 
 function CrossIgnore:RemoveFromAllAddonLists(base, realm)
     local function removeFromList(list)
