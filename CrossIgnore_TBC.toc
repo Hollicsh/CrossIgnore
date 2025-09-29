@@ -28,4 +28,6 @@ modules/chatfilterdefaults.lua
 modules/rightclick.lua
 modules/blockhandler.lua
 modules/options.lua
+modules/ignoreoptions.lua
+modules/importexport.lua
 CrossIgnoreUI.lua

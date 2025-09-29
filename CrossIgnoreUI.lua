@@ -168,7 +168,7 @@ function CrossIgnore:RefreshBlockedList(filterText)
 
     if not UI.header then
         local headerTitles = { L["PLAYER_NAME_HEADER"], L["SERVER_HEADER"], L["ADDED_HEADER"], L["EXPIRES_HEADER"], L["NOTE_HEADER"] }
-        local colWidths    = { 60, 100, 90, 80, 70 }
+        local colWidths    = { 65, 100, 90, 80, 70 }
         local xPos = 0
 
         UI.header = CreateFrame("Frame", nil, scrollChild)
@@ -611,36 +611,6 @@ local function AddNewWord()
     input:SetText("")
 end
 
-
-
-
-local function UpdateChannelDropdown()
-    local channelList = {
-        L["CHANNEL_ALL"],
-        L["CHANNEL_SAY"], L["CHANNEL_YELL"], L["CHANNEL_WHISPER"],
-        L["CHANNEL_GUILD"], L["CHANNEL_OFFICER"],
-        L["CHANNEL_PARTY"], L["CHANNEL_RAID"], L["CHANNEL_INSTANCE"],
-    }
-
-    local channels = { GetChannelList() }
-    local seen = {}
-
-    for i = 1, #channels, 3 do
-        local channelName = channels[i+1]
-        if channelName then
-            local clean = channelName:gsub("^%d+%.%s*", "") 
-            if not seen[clean:lower()] then
-                table.insert(channelList, clean)
-                seen[clean:lower()] = true
-            end
-        end
-    end
-
-    return channelList
-end
-
-
-
 local function RemoveSelectedWord()
     local sw = CrossIgnore.selectedWord
     if not sw then return end
@@ -730,6 +700,7 @@ end
 function CrossIgnore:CreateUI()
     if CrossIgnoreUI then return end
 
+    -- Static popup for remove all
     StaticPopupDialogs = StaticPopupDialogs or {}
     StaticPopupDialogs["CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS"] = {
         text = L["REMOVE_ALL_CONFIRM"],
@@ -738,7 +709,7 @@ function CrossIgnore:CreateUI()
         OnAccept = function()
             if CrossIgnoreDB and CrossIgnoreDB.global and CrossIgnoreDB.global.filters then
                 CrossIgnoreDB.global.filters.words = {}
-				CrossIgnoreDB.global.filters.removedDefaults = true
+                CrossIgnoreDB.global.filters.removedDefaults = true
             end
             print(L["REMOVE_ALL_DONE"])
             CrossIgnore:UpdateWordsList()
@@ -748,6 +719,7 @@ function CrossIgnore:CreateUI()
         hideOnEscape = true,
     }
 
+    -- Main frame
     CrossIgnoreUI = CreateFrame("Frame", "CrossIgnoreUI", UIParent, "BackdropTemplate")
     CrossIgnoreUI:SetSize(630, 520)
     CrossIgnoreUI:SetPoint("CENTER")
@@ -763,12 +735,11 @@ function CrossIgnore:CreateUI()
     CrossIgnoreUI:SetScript("OnDragStart", CrossIgnoreUI.StartMoving)
     CrossIgnoreUI:SetScript("OnDragStop", CrossIgnoreUI.StopMovingOrSizing)
 
-    local title = CreateLabel(CrossIgnoreUI, L["TITLE_HEADER"], "TOP", 0, -12, "GameFontHighlightLarge")
+    -- Title & Close
+    CreateLabel(CrossIgnoreUI, L["TITLE_HEADER"], "TOP", 0, -12, "GameFontHighlightLarge")
+    CreateButton(CrossIgnoreUI, L["CLOSE_BUTTON"], "TOPRIGHT", -10, -10, 70, 25, function() CrossIgnoreUI:Hide() end)
 
-    local closeButton = CreateButton(CrossIgnoreUI, L["CLOSE_BUTTON"], "TOPRIGHT", -10, -10, 70, 25, function()
-        CrossIgnoreUI:Hide()
-    end)
-
+    -- Left & Right Panels
     local leftPanel = CreateFrame("Frame", nil, CrossIgnoreUI, "BackdropTemplate")
     leftPanel:SetBackdrop({
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -778,10 +749,6 @@ function CrossIgnore:CreateUI()
     })
     leftPanel:SetPoint("TOPLEFT", 10, -40)
     leftPanel:SetSize(140, 460)
-
-    local ignoreListBtn = CreateButton(leftPanel, L["IGNORE_LIST_HEADER"], "TOP", 0, -10, 120, 40)
-    local chatfilterBtn = CreateButton(leftPanel, L["CHAT_FILTER_HEADER"], "TOP", 0, -60, 120, 40)
-    local optionsBtn = CreateButton(leftPanel, L["OPTIONS_HEADER"], "TOP", 0, -110, 120, 40)
 
     local rightPanel = CreateFrame("Frame", nil, CrossIgnoreUI, "BackdropTemplate")
     rightPanel:SetBackdrop({
@@ -793,196 +760,145 @@ function CrossIgnore:CreateUI()
     rightPanel:SetPoint("TOPLEFT", leftPanel, "TOPRIGHT", 10, 0)
     rightPanel:SetSize(450, 460)
 
-    local ignoreListPanel = CreateFrame("Frame", nil, rightPanel)
-    ignoreListPanel:SetAllPoints()
+    -- Helper to create buttons
+    local function Btn(parent, text, x, y, w, h)
+        local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+        b:SetPoint("TOP", x, y)
+        b:SetSize(w, h)
+        b:SetText(text)
+        return b
+    end
 
-	local searchBoxIgnore = CreateEditBox(ignoreListPanel, 425, 24, "TOPLEFT", 15, -10)
+    -- Panels
+    local panels = {
+        ignoreList   = CreateFrame("Frame", nil, rightPanel),
+        chatFilter   = CreateFrame("Frame", nil, rightPanel),
+        optionsMain  = CreateFrame("Frame", nil, rightPanel),
+        optionsIgnore= CreateFrame("Frame", nil, rightPanel),
+        optionsEI  = CreateFrame("Frame", nil, rightPanel),
+    }
+    for _, p in pairs(panels) do p:SetAllPoints(); p:Hide() end
+    panels.ignoreList:Show()
 
-	local placeholderIgnore = searchBoxIgnore:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-	placeholderIgnore:SetPoint("LEFT", searchBoxIgnore, "LEFT", 6, 0)
-	placeholderIgnore:SetText(L["SEARCH_PLACEHOLDER"])
-	
-	searchBoxIgnore:SetScript("OnTextChanged", function(self)
-		local text = self:GetText()
-		if text == "" then
-			placeholderIgnore:Show()
-		else
-			placeholderIgnore:Hide()
-		end
-		CrossIgnore:RefreshBlockedList(text)
-	end)
+    -- Buttons
+    local buttons = {
+        ignoreList   = Btn(leftPanel, L["IGNORE_LIST_HEADER"], 0, -10, 120, 40),
+        chatFilter   = Btn(leftPanel, L["CHAT_FILTER_HEADER"], 0, -60, 120, 40),
+        optionsMain  = Btn(leftPanel, L["OPTIONS_HEADER"], 0, -110, 120, 40),
+        optionsIgnore= Btn(leftPanel, L["OPTIONS_IGNORE"], 10, -155, 110, 30),
+        optionsEI    = Btn(leftPanel, L["OPTIONS_E_I"], 10, -190, 110, 30),
+    }
+    buttons.optionsIgnore:Hide()
+    buttons.optionsEI:Hide()
 
-	searchBoxIgnore:SetScript("OnEditFocusGained", function(self)
-		if self:GetText() == "" then
-			placeholderIgnore:Show()
-		end
-	end)
+    -- Show/hide functions
+    local function HideAllPanels()
+        for _, p in pairs(panels) do p:Hide() end
+    end
+    local function ShowOptionsSubButtons(show)
+        buttons.optionsIgnore:SetShown(show)
+        buttons.optionsEI:SetShown(show)
+    end
 
-	searchBoxIgnore:SetScript("OnEditFocusLost", function(self)
-		if self:GetText() == "" then
-			placeholderIgnore:Show()
-		end
-	end)
+    -- Button click configuration
+    local optionsConfig = {
+        { btn = buttons.ignoreList,   panel = panels.ignoreList,    func = function() CrossIgnore:RefreshBlockedList() end },
+        { btn = buttons.chatFilter,   panel = panels.chatFilter,    func = function() CrossIgnore:UpdateWordsList() end },
+        { btn = buttons.optionsMain,  panel = panels.optionsMain,   func = function()
+            if not CrossIgnore.optionsBuilt then CrossIgnore:CreateOptionsUI(panels.optionsMain); CrossIgnore.optionsBuilt = true end
+        end },
+        { btn = buttons.optionsIgnore,panel = panels.optionsIgnore, func = function()
+            if not CrossIgnore.optionsIgnoreBuilt then CrossIgnore:CreateIgnoreOptions(panels.optionsIgnore); CrossIgnore.optionsIgnoreBuilt = true end
+        end },
+        { btn = buttons.optionsEI,  panel = panels.optionsEI,   func = function()
+            if not CrossIgnore.optionsEIBuilt then CrossIgnore:CreateEIOptions(panels.optionsEI); CrossIgnore.optionsEIBuilt = true end
+        end },
+    }
 
-    local counterLabel = CreateLabel(ignoreListPanel, string.format(L["TOTAL_BLOCKED"], 0), "TOPLEFT", 10, -45, "GameFontNormal")
-    CrossIgnore.counterLabel = counterLabel
+    for _, cfg in ipairs(optionsConfig) do
+        cfg.btn:SetScript("OnClick", function()
+            HideAllPanels()
+            cfg.panel:Show()
+            if cfg.btn == buttons.optionsMain or cfg.btn == buttons.optionsIgnore or cfg.btn == buttons.optionsEI then
+                ShowOptionsSubButtons(true)
+            else
+                ShowOptionsSubButtons(false)
+            end
+            cfg.func()
+        end)
+    end
 
-    local scrollFrameIgnore, scrollChildIgnore = CreateScrollFrame(ignoreListPanel, 410, 350, "TOPLEFT", 10, -70)
-    scrollChildIgnore:SetSize(410, 800)
-
-    local accountWideLabel = CreateLabel(ignoreListPanel, L["ACCOUNT_WIDE_LABEL"], "TOPRIGHT", -50, -43, "GameFontNormal")
-    local accountWideCheckbox = CreateFrame("CheckButton", "CrossIgnoreAccountWideCheckbox", ignoreListPanel, "ChatConfigCheckButtonTemplate")
-    accountWideCheckbox:SetPoint("LEFT", accountWideLabel, "RIGHT", 10, 0)
-    accountWideCheckbox:SetChecked(CrossIgnore.charDB.profile.settings.useGlobalIgnore)
-    accountWideCheckbox:SetScript("OnClick", function(button)
-        local value = button:GetChecked()
-        CrossIgnore.charDB.profile.settings.useGlobalIgnore = value
-        if CrossIgnoreUI and CrossIgnoreUI:IsShown() then
-            CrossIgnore:RefreshBlockedList()
-        end
+    ----------------------
+    -- Ignore List Panel
+    ----------------------
+    local searchBoxIgnore = CreateEditBox(panels.ignoreList, 425, 24, "TOPLEFT", 15, -10)
+    local placeholderIgnore = searchBoxIgnore:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    placeholderIgnore:SetPoint("LEFT", searchBoxIgnore, "LEFT", 6, 0)
+    placeholderIgnore:SetText(L["SEARCH_PLACEHOLDER"])
+    searchBoxIgnore:SetScript("OnTextChanged", function(self)
+        local text = self:GetText()
+        if text == "" then placeholderIgnore:Show() else placeholderIgnore:Hide() end
+        CrossIgnore:RefreshBlockedList(text)
     end)
-
-    local removeButtonIgnore = CreateButton(ignoreListPanel, L["REMOVE_SELECTED_BTN"], "BOTTOM", 0, 15, 180, 30, RemoveSelectedPlayer)
-
     CrossIgnoreUI.searchBox = searchBoxIgnore
+
+    local counterLabel = CreateLabel(panels.ignoreList, string.format(L["TOTAL_BLOCKED"], 0), "TOPLEFT", 10, -45)
+    CrossIgnore.counterLabel = counterLabel
+	
+	local accountWideLabel = CreateLabel(panels.ignoreList, L["ACCOUNT_WIDE_LABEL"], "TOPRIGHT", -50, -43, "GameFontNormal")
+	local accountWideCheckbox = CreateFrame("CheckButton", "CrossIgnoreAccountWideCheckbox", panels.ignoreList, "ChatConfigCheckButtonTemplate")
+	accountWideCheckbox:SetPoint("LEFT", accountWideLabel, "RIGHT", 10, 0)
+	accountWideCheckbox:SetChecked(CrossIgnore.charDB.profile.settings.useGlobalIgnore)
+	accountWideCheckbox:SetScript("OnClick", function(button)
+		local value = button:GetChecked()
+		CrossIgnore.charDB.profile.settings.useGlobalIgnore = value
+		if CrossIgnoreUI and CrossIgnoreUI:IsShown() then
+			CrossIgnore:RefreshBlockedList()
+		end
+	end)
+	CrossIgnoreUI.accountWideCheckbox = accountWideCheckbox
+
+    local scrollFrameIgnore, scrollChildIgnore = CreateScrollFrame(panels.ignoreList, 410, 350, "TOPLEFT", 10, -70)
+    scrollChildIgnore:SetSize(410, 800)
     CrossIgnoreUI.scrollFrame = scrollFrameIgnore
     CrossIgnoreUI.scrollChild = scrollChildIgnore
+
+    local removeButtonIgnore = CreateButton(panels.ignoreList, L["REMOVE_SELECTED_BTN"], "BOTTOM", 0, 15, 180, 30, RemoveSelectedPlayer)
     CrossIgnoreUI.removeButton = removeButtonIgnore
 
-    local chatFilterPanel = CreateFrame("Frame", nil, rightPanel)
-    chatFilterPanel:SetAllPoints()
+    ----------------------
+    -- Chat Filter Panel
+    ----------------------
+    local searchBoxChat = CreateEditBox(panels.chatFilter, 425, 24, "TOPLEFT", 15, -25)
+    local placeholder = searchBoxChat:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    placeholder:SetPoint("LEFT", searchBoxChat, "LEFT", 6, 0)
+    placeholder:SetText(L["SEARCH_PLACEHOLDER"])
+    searchBoxChat:SetScript("OnTextChanged", function(self)
+        local text = self:GetText()
+        if text == "" then placeholder:Show() else placeholder:Hide() end
+        CrossIgnore:UpdateWordsList(text)
+    end)
+    CrossIgnoreUI.searchBox = searchBoxChat
 
-    local filterTitle = CreateLabel(chatFilterPanel, L["CHAT_FILTER_TITLE"], "TOP", 0, -12, "GameFontHighlightLarge")
-
-	local searchBoxChat = CreateEditBox(chatFilterPanel, 425, 24, "TOPLEFT", 15, -25)
-	searchBoxChat:SetAutoFocus(false)
-
-	local placeholder = searchBoxChat:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-	placeholder:SetPoint("LEFT", searchBoxChat, "LEFT", 6, 0)
-	placeholder:SetText(L["SEARCH_PLACEHOLDER"])
-
-	searchBoxChat:SetScript("OnTextChanged", function(self)
-		local text = self:GetText()
-		if text == "" then
-			placeholder:Show()
-		else
-			placeholder:Hide()
-		end
-		CrossIgnore:UpdateWordsList(text)
-	end)
-
-	searchBoxChat:SetScript("OnEditFocusGained", function(self)
-		if self:GetText() == "" then
-			placeholder:Show()
-		end
-	end)
-
-	searchBoxChat:SetScript("OnEditFocusLost", function(self)
-		if self:GetText() == "" then
-			placeholder:Show()
-		end
-	end)
-
-	CrossIgnoreUI.searchBox = searchBoxChat
-
-    local wordsScrollFrame, wordsScrollChild = CreateScrollFrame(chatFilterPanel, 410, 280, "TOPLEFT", 10, -55)
+    local wordsScrollFrame, wordsScrollChild = CreateScrollFrame(panels.chatFilter, 410, 280, "TOPLEFT", 10, -55)
     wordsScrollChild:SetSize(410, 800)
     CrossIgnoreUI.wordsScrollFrame = wordsScrollFrame
     CrossIgnoreUI.wordsScrollChild = wordsScrollChild
 
-    local inputLabel = CreateLabel(chatFilterPanel, L["ADD_NEW_WORD_LABEL"], "BOTTOMLEFT", 10, 100)
-    local newWordInput = CreateEditBox(chatFilterPanel, 200, 24, "BOTTOMLEFT", 15, 70)
-    newWordInput:SetAutoFocus(false)
+    local newWordInput = CreateEditBox(panels.chatFilter, 200, 24, "BOTTOMLEFT", 15, 70)
     CrossIgnoreUI.newWordInput = newWordInput
 
-    local channelDropdown = CreateChannelDropdown(chatFilterPanel)
-	channelDropdown:ClearAllPoints()
-	channelDropdown:SetPoint("LEFT", newWordInput, "RIGHT", -10, -4)
-	CrossIgnoreUI.channelDropdown = channelDropdown
-
-    local addWordBtn = CreateButton(chatFilterPanel, L["ADD_WORD_BTN"], "BOTTOMLEFT", 10, 40, 90, 24, function()
-        AddNewWord()
-    end)
-    addWordBtn:SetNormalFontObject("GameFontNormalSmall")
-    addWordBtn:SetHighlightFontObject("GameFontHighlightSmall")
-    CrossIgnoreUI.chatFilterAddBtn = addWordBtn
-
-    local removeWordBtn = CreateButton(chatFilterPanel, L["REMOVE_WORD_BTN"], "BOTTOMLEFT", 100, 40, 90, 24, RemoveSelectedWord)
-    removeWordBtn:SetNormalFontObject("GameFontNormalSmall")
-    removeWordBtn:SetHighlightFontObject("GameFontHighlightSmall")
-    CrossIgnoreUI.chatFilterRemoveBtn = removeWordBtn
-
-    local removeAllBtn = CreateButton(chatFilterPanel, L["REMOVE_ALL_BTN"], "BOTTOMLEFT", 190, 40, 90, 24, function()
-        StaticPopup_Show("CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS")
-    end)
-    removeAllBtn:SetNormalFontObject("GameFontNormalSmall")
-    removeAllBtn:SetHighlightFontObject("GameFontHighlightSmall")
-    CrossIgnoreUI.chatFilterRemoveAllBtn = removeAllBtn
-
-    CrossIgnoreUI.wordsScrollFrame = wordsScrollFrame
-    CrossIgnoreUI.wordsScrollChild = wordsScrollChild
-    CrossIgnoreUI.newWordInput = newWordInput
+    local channelDropdown = CreateChannelDropdown(panels.chatFilter)
+    channelDropdown:SetPoint("TOPLEFT", newWordInput, "TOPRIGHT", -10, 0)
     CrossIgnoreUI.channelDropdown = channelDropdown
 
-local optionsPanel = CreateFrame("Frame", nil, rightPanel)
-optionsPanel:SetAllPoints()
+    local addWordBtn = CreateButton(panels.chatFilter, L["ADD_WORD_BTN"], "BOTTOMLEFT", 10, 40, 90, 24, AddNewWord)
+    local removeWordBtn = CreateButton(panels.chatFilter, L["REMOVE_WORD_BTN"], "BOTTOMLEFT", 100, 40, 90, 24, RemoveSelectedWord)
+    local removeAllBtn = CreateButton(panels.chatFilter, L["REMOVE_ALL_BTN"], "BOTTOMLEFT", 190, 40, 90, 24, function() StaticPopup_Show("CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS") end)
 
-optionsPanel:SetScript("OnShow", function()
-    if not CrossIgnore.optionsBuilt then
-        CrossIgnore:CreateOptionsUI(optionsPanel)
-        CrossIgnore.optionsBuilt = true
-    end
-end)
-
-    local function ShowIgnoreList()
-        ignoreListPanel:Show()
-        chatFilterPanel:Hide()
-        optionsPanel:Hide()
-        ignoreListBtn:Disable()
-        chatfilterBtn:Enable()
-        optionsBtn:Enable()
-        self:RefreshBlockedList()
-    end
-
-    local function ShowChatFilter()
-        ignoreListPanel:Hide()
-        chatFilterPanel:Show()
-        optionsPanel:Hide()
-        chatfilterBtn:Disable()
-        ignoreListBtn:Enable()
-        optionsBtn:Enable()
-        CrossIgnore:UpdateWordsList()
-    end
-
-    local function ShowOptions()
-        optionsPanel:Show()
-        ignoreListPanel:Hide()
-        chatFilterPanel:Hide()
-        optionsBtn:Disable()
-        ignoreListBtn:Enable()
-        chatfilterBtn:Enable()
-    end
-
-ignoreListBtn:SetScript("OnClick", ShowIgnoreList)
-chatfilterBtn:SetScript("OnClick", ShowChatFilter)
-optionsBtn:SetScript("OnClick", ShowOptions)
-
-
-ShowIgnoreList()
-
-C_Timer.After(0, function()
-    if CrossIgnoreUI then
-        CrossIgnoreUI:SetPropagateKeyboardInput(true)
-        CrossIgnoreUI:SetScript("OnKeyDown", function(self, key)
-            if key == "ESCAPE" then
-                self:Hide()
-            end
-        end)
-
-        CrossIgnoreUI:SetScript("OnShow", function(self)
-            CrossIgnore:RefreshBlockedList()
-        end)
-    end
-end)
-
+    -- Initialize UI (show default)
+    buttons.ignoreList:GetScript("OnClick")()
 end
+
+
+
