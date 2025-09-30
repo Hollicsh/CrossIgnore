@@ -41,7 +41,6 @@ function CrossIgnore:CreateEIOptions(parent)
         end
     end)
 
-    -- --- Import Box ---
     local importScroll = CreateFrame("ScrollFrame", "CrossIgnoreImportScroll", parent, "UIPanelScrollFrameTemplate")
     importScroll:SetSize(400, 150)
     importScroll:SetPoint("TOPLEFT", exportScroll, "BOTTOMLEFT", 0, -30)

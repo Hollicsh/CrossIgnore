@@ -62,22 +62,18 @@ function BlockHandler:Register()
         ChatFrame_AddMessageEventFilter(event, ChatEventFilter)
     end
 
-    -- Frame for misc events (trade/duel/invite)
     local frame = CreateFrame("Frame")
     for _, event in ipairs(BLOCK_MISC_EVENTS) do
         frame:RegisterEvent(event)
     end
     frame:SetScript("OnEvent", BlockEventFrameHandler)
 
-    -- Hook whisper frames (UI cleanup)
     HookWhisperFrames()
 
-    -- Auto-reply handler
 local whisperFrame = CreateFrame("Frame")
 whisperFrame:RegisterEvent("CHAT_MSG_WHISPER")
 whisperFrame:RegisterEvent("CHAT_MSG_BN_WHISPER")
 whisperFrame:SetScript("OnEvent", function(_, event, msg, sender, ...)
-    -- Only reply if the sender is blocked AND auto-reply is enabled
     if CrossIgnore.charDB.profile.settings.autoReplyEnabled and IsBlockedPlayer(sender) then
         local replyMsg = CrossIgnore.charDB.profile.settings.autoReplyMessage
 

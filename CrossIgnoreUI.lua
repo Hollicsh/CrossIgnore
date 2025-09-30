@@ -699,8 +699,6 @@ end
 
 function CrossIgnore:CreateUI()
     if CrossIgnoreUI then return end
-
-    -- Static popup for remove all
     StaticPopupDialogs = StaticPopupDialogs or {}
     StaticPopupDialogs["CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS"] = {
         text = L["REMOVE_ALL_CONFIRM"],
@@ -719,7 +717,6 @@ function CrossIgnore:CreateUI()
         hideOnEscape = true,
     }
 
-    -- Main frame
     CrossIgnoreUI = CreateFrame("Frame", "CrossIgnoreUI", UIParent, "BackdropTemplate")
     CrossIgnoreUI:SetSize(630, 520)
     CrossIgnoreUI:SetPoint("CENTER")
@@ -735,11 +732,9 @@ function CrossIgnore:CreateUI()
     CrossIgnoreUI:SetScript("OnDragStart", CrossIgnoreUI.StartMoving)
     CrossIgnoreUI:SetScript("OnDragStop", CrossIgnoreUI.StopMovingOrSizing)
 
-    -- Title & Close
     CreateLabel(CrossIgnoreUI, L["TITLE_HEADER"], "TOP", 0, -12, "GameFontHighlightLarge")
     CreateButton(CrossIgnoreUI, L["CLOSE_BUTTON"], "TOPRIGHT", -10, -10, 70, 25, function() CrossIgnoreUI:Hide() end)
 
-    -- Left & Right Panels
     local leftPanel = CreateFrame("Frame", nil, CrossIgnoreUI, "BackdropTemplate")
     leftPanel:SetBackdrop({
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -760,7 +755,6 @@ function CrossIgnore:CreateUI()
     rightPanel:SetPoint("TOPLEFT", leftPanel, "TOPRIGHT", 10, 0)
     rightPanel:SetSize(450, 460)
 
-    -- Helper to create buttons
     local function Btn(parent, text, x, y, w, h)
         local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
         b:SetPoint("TOP", x, y)
@@ -769,7 +763,6 @@ function CrossIgnore:CreateUI()
         return b
     end
 
-    -- Panels
     local panels = {
         ignoreList   = CreateFrame("Frame", nil, rightPanel),
         chatFilter   = CreateFrame("Frame", nil, rightPanel),
@@ -780,7 +773,6 @@ function CrossIgnore:CreateUI()
     for _, p in pairs(panels) do p:SetAllPoints(); p:Hide() end
     panels.ignoreList:Show()
 
-    -- Buttons
     local buttons = {
         ignoreList   = Btn(leftPanel, L["IGNORE_LIST_HEADER"], 0, -10, 120, 40),
         chatFilter   = Btn(leftPanel, L["CHAT_FILTER_HEADER"], 0, -60, 120, 40),
@@ -791,7 +783,6 @@ function CrossIgnore:CreateUI()
     buttons.optionsIgnore:Hide()
     buttons.optionsEI:Hide()
 
-    -- Show/hide functions
     local function HideAllPanels()
         for _, p in pairs(panels) do p:Hide() end
     end
@@ -800,7 +791,6 @@ function CrossIgnore:CreateUI()
         buttons.optionsEI:SetShown(show)
     end
 
-    -- Button click configuration
     local optionsConfig = {
         { btn = buttons.ignoreList,   panel = panels.ignoreList,    func = function() CrossIgnore:RefreshBlockedList() end },
         { btn = buttons.chatFilter,   panel = panels.chatFilter,    func = function() CrossIgnore:UpdateWordsList() end },

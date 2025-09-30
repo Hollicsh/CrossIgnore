@@ -6,7 +6,6 @@ function CrossIgnore:CreateOptionsUI(parent)
     label:SetPoint("TOP", 0, -12)
     label:SetText(L["CI_OPTIONS"])
 
-    -- LFG Auto Block
     local lfgLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     lfgLabel:SetPoint("TOPLEFT", 10, -50)
     lfgLabel:SetText(L["LFG_AUTO_BLOCK"])

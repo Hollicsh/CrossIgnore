@@ -6,7 +6,6 @@ function CrossIgnore:CreateIgnoreOptions(parent)
     label:SetPoint("TOP", 0, -12)
     label:SetText(L["OPTIONS_IGNORE"])
 
-    -- Default Expire Days
     local expireLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     expireLabel:SetPoint("TOPLEFT", 10, -50)
     expireLabel:SetText(L["DEFAULT_EXPIRE_LABEL"])
@@ -32,9 +31,6 @@ function CrossIgnore:CreateIgnoreOptions(parent)
         print(L["DEFAULT_EXPIRE_SET"]:format((days == 0 and L["NEVER"] or days)))
     end)
 
-    -- ========================
-    -- Auto Reply Section
-    -- ========================
     local autoReplyLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     autoReplyLabel:SetPoint("TOPLEFT", expireLabel, "BOTTOMLEFT", 0, -40)
     autoReplyLabel:SetText(L["AUTO_REPLY_ENABLE_CHECK"])
