@@ -2,19 +2,15 @@ local addonName, addonTable = ...
 local L = addonTable.L
 local LibDeflate = LibStub("LibDeflate")
 
--- ======== Chat Options UI ========
 function CrossIgnore:CreateEIOptions(parent)
-    -- Title
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     label:SetPoint("TOP", 0, -12)
     label:SetText(L["OPTIONS_E_I"])
 
-    -- Import / Export label
     local eiLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     eiLabel:SetPoint("TOPLEFT", 10, -50)
-    eiLabel:SetText("Import / Export Filters")
+    eiLabel:SetText(L["OPTIONS_E_I"])
 
-    -- --- Export Box ---
     local exportScroll = CreateFrame("ScrollFrame", "CrossIgnoreExportScroll", parent, "UIPanelScrollFrameTemplate")
     exportScroll:SetSize(400, 150)
     exportScroll:SetPoint("TOPLEFT", eiLabel, "BOTTOMLEFT", 0, -10)
@@ -31,8 +27,8 @@ function CrossIgnore:CreateEIOptions(parent)
 
     local exportBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     exportBtn:SetSize(100, 22)
-    exportBtn:SetPoint("TOP", exportScroll, "BOTTOM", 0, -5) -- Centered below box
-    exportBtn:SetText("Export")
+    exportBtn:SetPoint("TOP", exportScroll, "BOTTOM", 0, -5) 
+    exportBtn:SetText(L["OPTIONS_EXPORT"])
     exportBtn:SetScript("OnClick", function()
         local filters = CrossIgnore.ChatFilter:GetFilters()
         if filters then
@@ -40,7 +36,8 @@ function CrossIgnore:CreateEIOptions(parent)
             local compressed = LibDeflate:CompressDeflate(humanReadable, { level = 9 })
             local encoded = LibDeflate:EncodeForPrint(compressed)
             exportBox:SetText(encoded)
-            print("Filters exported! Copy the string above.")
+            exportBox:HighlightText()  
+            exportBox:SetFocus()
         end
     end)
 
@@ -49,20 +46,27 @@ function CrossIgnore:CreateEIOptions(parent)
     importScroll:SetSize(400, 150)
     importScroll:SetPoint("TOPLEFT", exportScroll, "BOTTOMLEFT", 0, -30)
 
-    local importBox = CreateFrame("EditBox", "CrossIgnoreImportBox", importScroll)
-    importBox:SetMultiLine(true)
-    importBox:SetFontObject(ChatFontNormal)
-    importBox:SetWidth(400)
-    importBox:SetHeight(150)
-    importBox:SetAutoFocus(false)
-    importBox:SetText("Paste filters here...")
-    importBox:SetScript("OnEscapePressed", function() importBox:ClearFocus() end)
-    importScroll:SetScrollChild(importBox)
+	local importBox = CreateFrame("EditBox", "CrossIgnoreImportBox", importScroll)
+	importBox:SetMultiLine(true)
+	importBox:SetFontObject(ChatFontNormal)
+	importBox:SetWidth(400)
+	importBox:SetHeight(150)
+	importBox:SetAutoFocus(false)
+	importBox:SetText(L["OPTIONS_PRINT1"])
+	importBox:SetScript("OnEscapePressed", function() importBox:ClearFocus() end)
+	importBox:SetScript("OnMouseDown", function(self)
+		if self:GetText() == (L["OPTIONS_PRINT1"]) then
+			self:SetText("")
+		end
+		self:HighlightText() 
+		self:SetFocus()
+	end)
+	importScroll:SetScrollChild(importBox)
 
     local importBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     importBtn:SetSize(100, 22)
-    importBtn:SetPoint("TOP", importScroll, "BOTTOM", 0, -5) -- Centered below box
-    importBtn:SetText("Import")
+    importBtn:SetPoint("TOP", importScroll, "BOTTOM", 0, -5) 
+    importBtn:SetText(L["OPTIONS_IMPORT"])
     importBtn:SetScript("OnClick", function()
         local text = importBox:GetText()
         if text and text ~= "" then
@@ -82,15 +86,14 @@ function CrossIgnore:CreateEIOptions(parent)
                 if CrossIgnore.ChatFilter and CrossIgnore.ChatFilter.UpdateWordsList then
                     CrossIgnore.ChatFilter:UpdateWordsList()
                 end
-                print("Filters imported successfully!")
+                print(L["OPTIONS_PRINT2"])
             else
-                print("Failed to import filters. Make sure you pasted the exact string from the export box.")
+                print(L["OPTIONS_PRINT3"])
             end
         end
     end)
 end
 
--- ======== Serialize to human-readable ========
 function CrossIgnore:SerializeHuman(filters)
     local parts = {}
     for channel, list in pairs(filters) do
@@ -107,7 +110,6 @@ function CrossIgnore:SerializeHuman(filters)
     return table.concat(parts, ";")
 end
 
--- ======== Deserialize human-readable ========
 function CrossIgnore:DeserializeHuman(str)
     if not str or str == "" then return nil end
     local filters = {}
