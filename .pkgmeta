@@ -1,0 +1,10 @@
+package-as: CrossIgnore
+
+enable-nolib-creation: yes
+
+ignore:
+  - .github
+  - .gitignore
+  - README.md
+  - pkgmeta.yml
+

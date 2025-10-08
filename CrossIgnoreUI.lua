@@ -699,6 +699,7 @@ end
 
 function CrossIgnore:CreateUI()
     if CrossIgnoreUI then return end
+
     StaticPopupDialogs = StaticPopupDialogs or {}
     StaticPopupDialogs["CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS"] = {
         text = L["REMOVE_ALL_CONFIRM"],
@@ -768,7 +769,8 @@ function CrossIgnore:CreateUI()
         chatFilter   = CreateFrame("Frame", nil, rightPanel),
         optionsMain  = CreateFrame("Frame", nil, rightPanel),
         optionsIgnore= CreateFrame("Frame", nil, rightPanel),
-        optionsEI  = CreateFrame("Frame", nil, rightPanel),
+        optionsEI    = CreateFrame("Frame", nil, rightPanel),
+        chatFilterDebug = CreateFrame("Frame", nil, rightPanel),
     }
     for _, p in pairs(panels) do p:SetAllPoints(); p:Hide() end
     panels.ignoreList:Show()
@@ -779,16 +781,21 @@ function CrossIgnore:CreateUI()
         optionsMain  = Btn(leftPanel, L["OPTIONS_HEADER"], 0, -110, 120, 40),
         optionsIgnore= Btn(leftPanel, L["OPTIONS_IGNORE"], 10, -155, 110, 30),
         optionsEI    = Btn(leftPanel, L["OPTIONS_E_I"], 10, -190, 110, 30),
+        chatFilterDebug = Btn(leftPanel, "ChatFilter DeBug", 10, -225, 110, 30),
     }
     buttons.optionsIgnore:Hide()
     buttons.optionsEI:Hide()
+    buttons.chatFilterDebug:Hide()
 
     local function HideAllPanels()
         for _, p in pairs(panels) do p:Hide() end
+		CrossIgnore.ChatFilter:SetDebugActive(false)
+		CrossIgnore.ChatFilter:ClearLog()
     end
     local function ShowOptionsSubButtons(show)
         buttons.optionsIgnore:SetShown(show)
         buttons.optionsEI:SetShown(show)
+        buttons.chatFilterDebug:SetShown(show)
     end
 
     local optionsConfig = {
@@ -803,13 +810,18 @@ function CrossIgnore:CreateUI()
         { btn = buttons.optionsEI,  panel = panels.optionsEI,   func = function()
             if not CrossIgnore.optionsEIBuilt then CrossIgnore:CreateEIOptions(panels.optionsEI); CrossIgnore.optionsEIBuilt = true end
         end },
+        { btn = buttons.chatFilterDebug, panel = panels.chatFilterDebug, func = function()
+			if not CrossIgnore.chatFilterDebugBuilt then CrossIgnore:CreateChatFilterDebugMenu(panels.chatFilterDebug) CrossIgnore.chatFilterDebugBuilt = true end
+            refreshLeftPanel()
+			CrossIgnore.ChatFilter:SetDebugActive(true)
+		end },
     }
 
     for _, cfg in ipairs(optionsConfig) do
         cfg.btn:SetScript("OnClick", function()
             HideAllPanels()
             cfg.panel:Show()
-            if cfg.btn == buttons.optionsMain or cfg.btn == buttons.optionsIgnore or cfg.btn == buttons.optionsEI then
+            if cfg.btn == buttons.optionsMain or cfg.btn == buttons.optionsIgnore or cfg.btn == buttons.optionsEI or cfg.btn == buttons.chatFilterDebug then
                 ShowOptionsSubButtons(true)
             else
                 ShowOptionsSubButtons(false)
@@ -818,9 +830,6 @@ function CrossIgnore:CreateUI()
         end)
     end
 
-    ----------------------
-    -- Ignore List Panel
-    ----------------------
     local searchBoxIgnore = CreateEditBox(panels.ignoreList, 425, 24, "TOPLEFT", 15, -10)
     local placeholderIgnore = searchBoxIgnore:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     placeholderIgnore:SetPoint("LEFT", searchBoxIgnore, "LEFT", 6, 0)
@@ -834,19 +843,19 @@ function CrossIgnore:CreateUI()
 
     local counterLabel = CreateLabel(panels.ignoreList, string.format(L["TOTAL_BLOCKED"], 0), "TOPLEFT", 10, -45)
     CrossIgnore.counterLabel = counterLabel
-	
-	local accountWideLabel = CreateLabel(panels.ignoreList, L["ACCOUNT_WIDE_LABEL"], "TOPRIGHT", -50, -43, "GameFontNormal")
-	local accountWideCheckbox = CreateFrame("CheckButton", "CrossIgnoreAccountWideCheckbox", panels.ignoreList, "ChatConfigCheckButtonTemplate")
-	accountWideCheckbox:SetPoint("LEFT", accountWideLabel, "RIGHT", 10, 0)
-	accountWideCheckbox:SetChecked(CrossIgnore.charDB.profile.settings.useGlobalIgnore)
-	accountWideCheckbox:SetScript("OnClick", function(button)
-		local value = button:GetChecked()
-		CrossIgnore.charDB.profile.settings.useGlobalIgnore = value
-		if CrossIgnoreUI and CrossIgnoreUI:IsShown() then
-			CrossIgnore:RefreshBlockedList()
-		end
-	end)
-	CrossIgnoreUI.accountWideCheckbox = accountWideCheckbox
+
+    local accountWideLabel = CreateLabel(panels.ignoreList, L["ACCOUNT_WIDE_LABEL"], "TOPRIGHT", -50, -43, "GameFontNormal")
+    local accountWideCheckbox = CreateFrame("CheckButton", "CrossIgnoreAccountWideCheckbox", panels.ignoreList, "ChatConfigCheckButtonTemplate")
+    accountWideCheckbox:SetPoint("LEFT", accountWideLabel, "RIGHT", 10, 0)
+    accountWideCheckbox:SetChecked(CrossIgnore.charDB.profile.settings.useGlobalIgnore)
+    accountWideCheckbox:SetScript("OnClick", function(button)
+        local value = button:GetChecked()
+        CrossIgnore.charDB.profile.settings.useGlobalIgnore = value
+        if CrossIgnoreUI and CrossIgnoreUI:IsShown() then
+            CrossIgnore:RefreshBlockedList()
+        end
+    end)
+    CrossIgnoreUI.accountWideCheckbox = accountWideCheckbox
 
     local scrollFrameIgnore, scrollChildIgnore = CreateScrollFrame(panels.ignoreList, 410, 350, "TOPLEFT", 10, -70)
     scrollChildIgnore:SetSize(410, 800)
@@ -856,9 +865,6 @@ function CrossIgnore:CreateUI()
     local removeButtonIgnore = CreateButton(panels.ignoreList, L["REMOVE_SELECTED_BTN"], "BOTTOM", 0, 15, 180, 30, RemoveSelectedPlayer)
     CrossIgnoreUI.removeButton = removeButtonIgnore
 
-    ----------------------
-    -- Chat Filter Panel
-    ----------------------
     local searchBoxChat = CreateEditBox(panels.chatFilter, 425, 24, "TOPLEFT", 15, -25)
     local placeholder = searchBoxChat:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     placeholder:SetPoint("LEFT", searchBoxChat, "LEFT", 6, 0)
@@ -886,7 +892,6 @@ function CrossIgnore:CreateUI()
     local removeWordBtn = CreateButton(panels.chatFilter, L["REMOVE_WORD_BTN"], "BOTTOMLEFT", 100, 40, 90, 24, RemoveSelectedWord)
     local removeAllBtn = CreateButton(panels.chatFilter, L["REMOVE_ALL_BTN"], "BOTTOMLEFT", 190, 40, 90, 24, function() StaticPopup_Show("CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS") end)
 
-    -- Initialize UI (show default)
     buttons.ignoreList:GetScript("OnClick")()
 end
 

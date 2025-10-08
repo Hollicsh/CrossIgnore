@@ -79,6 +79,13 @@ function ChatFilter:GetFilters()
     CrossIgnoreDB.global.filters.words = CrossIgnoreDB.global.filters.words or {}
     CrossIgnoreDB.global.filters.words["all channels"] =
         CrossIgnoreDB.global.filters.words["all channels"] or {}
+
+    for key, list in pairs(CrossIgnoreDB.global.filters.words) do
+        if type(list) ~= "table" then
+            CrossIgnoreDB.global.filters.words[key] = {}
+        end
+    end
+
     return CrossIgnoreDB.global.filters.words
 end
 
@@ -97,7 +104,6 @@ local function buildStrictCore(wordLower)
     end
     return table.concat(chars, "[%s%p]*")
 end
-
 
 local function buildNonStrictList(wordLower)
     local out = {}
@@ -129,89 +135,259 @@ local function buildNonStrictList(wordLower)
 end
 
 local compiledMatchers = {}
+local reusableBuckets = {} 
 
-local function buildChannelMatcher(patterns)
-    if not patterns or #patterns == 0 then return nil end
+local function buildMatcherForChannel(channelKey, patterns)
+    if not patterns or #patterns == 0 then
+        compiledMatchers[channelKey] = nil
+        return
+    end
 
-    local lines = {
-        "return function(msg, sender)",
-        "  msg = (msg or \"\"):lower()",
-        "  sender = (sender or \"\"):lower()",
-    }
+    local bucket = reusableBuckets[channelKey] or {}
+    reusableBuckets[channelKey] = bucket
+    wipe(bucket)
+
     for i = 1, #patterns do
-        lines[#lines+1] = ("  if msg:find(%q) then return true end"):format(patterns[i])
-        lines[#lines+1] = ("  if sender:find(%q) then return true end"):format(patterns[i])
+        bucket[#bucket+1] = patterns[i]
     end
-    lines[#lines+1] = "  return false"
-    lines[#lines+1] = "end"
-
-    local chunk, err = loadstring(table.concat(lines, "\n"))
-    if not chunk then
-        return function(msg, sender)
-            msg = (msg or ""):lower()
-            sender = (sender or ""):lower()
-            for i = 1, #patterns do
-                local p = patterns[i]
-                if msg:find(p) or sender:find(p) then return true end
-            end
-            return false
-        end
-    end
-    return chunk()
+    compiledMatchers[channelKey] = bucket
 end
 
-local function CompilePatterns()
-    wipe(compiledMatchers)
-
+local function CompilePatternsForChannel(channelKey)
     local filters = ChatFilter:GetFilters()
-    for channelKey, list in pairs(filters) do
-        if type(list) == "table" and #list > 0 then
-            local bucket = {}
-            for _, entry in ipairs(list) do
-                local wordLower =
-                    (type(entry) == "table" and entry.normalized)
-                    or (type(entry) == "string" and entry:lower())
-                if wordLower and wordLower ~= "" then
-                    if type(entry) == "table" and entry.strict then
-                        local core = buildStrictCore(wordLower)
-                        if core then bucket[#bucket+1] = core end
-                    else
-                        local plist = buildNonStrictList(wordLower)
-                        for i = 1, #plist do
-                            bucket[#bucket+1] = plist[i]
-                        end
+    local list = filters[channelKey]
+
+    if type(list) ~= "table" or #list == 0 then
+        compiledMatchers[channelKey] = nil
+        return
+    end
+
+    local bucket = reusableBuckets[channelKey] or {}
+    reusableBuckets[channelKey] = bucket
+    wipe(bucket)
+
+    for _, entry in ipairs(list) do
+        if type(entry) == "table" or type(entry) == "string" then
+            local wordLower = (type(entry) == "table" and entry.normalized) or (type(entry) == "string" and entry:lower())
+            if wordLower and wordLower ~= "" then
+                if type(entry) == "table" and entry.strict then
+                    local core = buildStrictCore(wordLower)
+                    if core then bucket[#bucket+1] = core end
+                else
+                    local plist = buildNonStrictList(wordLower)
+                    for i = 1, #plist do
+                        bucket[#bucket+1] = plist[i]
                     end
                 end
             end
-            if #bucket > 0 then
-                compiledMatchers[channelKey:lower()] = buildChannelMatcher(bucket)
-            end
         end
+    end
+
+    compiledMatchers[channelKey] = bucket
+end
+
+local function CompilePatterns()
+    for channelKey, _ in pairs(ChatFilter:GetFilters()) do
+        CompilePatternsForChannel(channelKey)
     end
 end
 
 local function IsFilteredMessage(msg, sender, event, ...)
     msg = msg or ""
     sender = sender or ""
+    local msgLower = msg:lower()
+    local senderLower = sender:lower()
 
-    local fnAll = compiledMatchers["all channels"]
-    if fnAll and fnAll(msg, sender) then
-        return true
+    local filters = ChatFilter:GetFilters()
+
+    local function findMatchedWord(key)
+        local patterns = compiledMatchers[key] or {}
+
+        for _, pattern in ipairs(patterns) do
+            if msgLower:find(pattern) or senderLower:find(pattern) then
+                return pattern, false
+            end
+        end
+
+        local list = filters[key] or {}
+        for _, entry in ipairs(list) do
+            local word = (type(entry) == "table" and entry.normalized) or (type(entry) == "string" and entry:lower())
+            local strict = type(entry) == "table" and entry.strict or false
+            if word then
+                if strict then
+                    local strippedMsg = msgLower:gsub("[%s%p]", "")
+                    local strippedWord = word:gsub("[%s%p]", "")
+                    if strippedMsg:find(strippedWord, 1, true) then
+                        return word, true
+                    end
+                else
+                    if msgLower:find(word, 1, true) or senderLower:find(word, 1, true) then
+                        return word, false
+                    end
+                end
+            end
+        end
+
+        return nil, false
+    end
+
+    local allMatchedWord, allIsStrict = findMatchedWord("all channels")
+    if allMatchedWord then
+        return true, allMatchedWord, allIsStrict
     end
 
     local channelKey = GetChannelCategory(event, ...)
-    if not channelKey then return false end
-    channelKey = NormalizeChannelKey(channelKey):lower()
-    local fnChan = compiledMatchers[channelKey]
-    if fnChan and fnChan(msg, sender) then
+    if channelKey then
+        channelKey = NormalizeChannelKey(channelKey)
+        local channelMatchedWord, channelIsStrict = findMatchedWord(channelKey)
+        if channelMatchedWord then
+            return true, channelMatchedWord, channelIsStrict
+        end
+    end
+
+    return false, nil, false
+end
+
+local MAX_LOG_ENTRIES = 500
+local logIndex = 1
+
+local function AddLog(entry)
+    CrossIgnore.ChatFilter.blockedMessages = CrossIgnore.ChatFilter.blockedMessages or {}
+    local logs = CrossIgnore.ChatFilter.blockedMessages
+
+    logs[logIndex] = entry
+    logIndex = logIndex + 1
+    if logIndex > MAX_LOG_ENTRIES then
+        logIndex = 1
+    end
+end
+
+local recentMessages = {}
+local DUPLICATE_EXPIRY = 60 
+
+local function IsDuplicate(msg, sender)
+    local key = sender .. "|" .. msg
+    local now = time()
+
+    if recentMessages[key] and now - recentMessages[key] < DUPLICATE_EXPIRY then
         return true
     end
 
+    recentMessages[key] = now
     return false
 end
 
+local cleanupFrame = CreateFrame("Frame")
+cleanupFrame.elapsed = 0
+cleanupFrame:SetScript("OnUpdate", function(self, elapsed)
+    self.elapsed = self.elapsed + elapsed
+    if self.elapsed < 30 then return end 
+    self.elapsed = 0
+
+    local now = time()
+    for key, ts in pairs(recentMessages) do
+        if now - ts >= DUPLICATE_EXPIRY then
+            recentMessages[key] = nil
+        end
+    end
+end)
+
+local function IsFilteredForChannel(msg, sender, channelKey)
+    msg = msg or ""
+    sender = sender or ""
+    local msgLower = msg:lower()
+    local senderLower = sender:lower()
+
+    local filters = CrossIgnore.ChatFilter:GetFilters()
+    local list = filters[channelKey] or {}
+
+    for _, entry in ipairs(list) do
+        local word = (type(entry) == "table" and entry.normalized) or (type(entry) == "string" and entry:lower())
+        local strict = type(entry) == "table" and entry.strict or false
+        if word then
+            if strict then
+                if (msgLower:gsub("[%s%p]", "")):find(word:gsub("[%s%p]", ""), 1, true) then
+                    return word, true
+                end
+            else
+                if msgLower:find(word, 1, true) or senderLower:find(word, 1, true) then
+                    return word, false
+                end
+            end
+        end
+    end
+
+    return nil, false
+end
+
+function ChatFilter:SetDebugActive(state)
+    self.debugActive = state and true or false
+end
+
+function ChatFilter:IsDebugActive()
+    return self.debugActive == true
+end
+
+
+function ChatFilter:ClearLog()
+    if not self.blockedMessages then
+        self.blockedMessages = {}
+        return
+    end
+
+    for i = #self.blockedMessages, 1, -1 do
+        table.remove(self.blockedMessages, i)
+    end
+
+    if self.RefreshRightPanel then
+        self:RefreshRightPanel()
+    end
+end
+
 local function ChatEventFilter(_, event, msg, sender, ...)
-    return IsFilteredMessage(msg, sender, event, ...)
+    local blocked, matchedWord, isStrict, matchedKey = false, nil, false, nil
+
+    local keysToCheck = { "all channels" }
+    local channelKey = GetChannelCategory(event, ...)
+    if channelKey then
+        table.insert(keysToCheck, CrossIgnore.ChatFilter:NormalizeChannelKey(channelKey))
+    end
+
+    for _, key in ipairs(keysToCheck) do
+        local word, strict = IsFilteredForChannel(msg, sender, key)
+        if word then
+            matchedKey = key
+            matchedWord = word
+            isStrict = strict
+            blocked = true
+            break
+        end
+    end
+
+    if blocked then
+        local now = time()
+        local entry = {
+            message   = msg,
+            sender    = sender,
+            channel   = matchedKey,
+            word      = matchedWord,
+            strict    = isStrict,
+            event     = event,
+            time      = date("%Y-%m-%d %H:%M:%S", GetServerTime()),
+            timestamp = now,
+        }
+
+    if ChatFilter.debugActive then
+        AddLog(entry)
+		if not IsDuplicate(msg, sender) and CrossIgnore.ChatFilter.OnBlockedMessageAdded then
+				for _, callback in ipairs(CrossIgnore.ChatFilter.OnBlockedMessageAdded) do
+					callback(entry)
+				end
+			end
+		end
+	end
+
+    return blocked
 end
 
 function ChatFilter:UpdateEventRegistration()
@@ -222,6 +398,7 @@ function ChatFilter:UpdateEventRegistration()
     end
 
     CompilePatterns()
+
     local haveAny = next(compiledMatchers) ~= nil
     if not haveAny then return end
 
@@ -257,7 +434,7 @@ end
 function ChatFilter:AddWord(word, channel, strict)
     if not word or word == "" then return end
     local filters = self:GetFilters()
-    local key = NormalizeChannelKey(channel or "all channels"):lower()
+    local key = NormalizeChannelKey(channel or "all channels")
     filters[key] = filters[key] or {}
     local normWord = word:lower()
 
@@ -286,9 +463,9 @@ end
 function ChatFilter:RemoveWord(word, channel)
     if not word or word == "" then return end
     local filters = self:GetFilters()
-    local key = NormalizeChannelKey(channel or "all channels"):lower()
+    local key = NormalizeChannelKey(channel or "all channels")
     local list = filters[key]
-    if not list then return end
+    if type(list) ~= "table" then return end
 
     local lowered = word:lower()
     for i = #list, 1, -1 do
@@ -306,7 +483,7 @@ end
 function ChatFilter:SetWordStrict(word, channel, strict)
     if not word or word == "" then return end
     local filters = self:GetFilters()
-    local key = NormalizeChannelKey(channel or "all channels"):lower()
+    local key = NormalizeChannelKey(channel or "all channels")
     filters[key] = filters[key] or {}
 
     for idx, entry in ipairs(filters[key]) do
@@ -327,6 +504,14 @@ end
 
 function ChatFilter:Initialize()
     self:UpdateEventRegistration()
+end
+
+function ChatFilter:CompilePatterns()
+    CompilePatterns()
+end
+
+function ChatFilter:IsFilteredMessage(msg, sender, event, ...)
+    return IsFilteredMessage(msg, sender, event, ...)
 end
 
 return ChatFilter

@@ -26,18 +26,99 @@ local function ShowStyledDropdown(items, anchorFrame)
     ToggleDropDownMenu(1, nil, menuFrame, anchorFrame, 0, 0)
 end
 
+local function CreateCustomPopup(title, defaultText, onAccept)
+    local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    frame:SetSize(300, 100)
+    frame:SetPoint("CENTER")
+    frame:SetBackdrop({
+        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 16,
+        insets = { left=4, right=4, top=4, bottom=4 }
+    })
+    frame:SetBackdropColor(0,0,0,0.8)
+    frame:Hide()
+    frame:SetFrameStrata("DIALOG")
+
+    local titleText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    titleText:SetPoint("TOP", 0, -10)
+    titleText:SetText(title)
+
+    local editBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+    editBox:SetSize(260, 25)
+    editBox:SetPoint("TOP", titleText, "BOTTOM", 0, -10)
+    editBox:SetAutoFocus(true)
+    editBox:SetText(defaultText or "")
+
+    local acceptBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    acceptBtn:SetSize(80, 25)
+    acceptBtn:SetPoint("BOTTOMLEFT", 20, 10)
+    acceptBtn:SetText("Save")
+    acceptBtn:SetScript("OnClick", function()
+        if onAccept then onAccept(editBox:GetText()) end
+        frame:Hide()
+    end)
+
+    local cancelBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    cancelBtn:SetSize(80, 25)
+    cancelBtn:SetPoint("BOTTOMRIGHT", -20, 10)
+    cancelBtn:SetText("Cancel")
+    cancelBtn:SetScript("OnClick", function()
+        frame:Hide()
+    end)
+
+    return frame, editBox
+end
+
+function CrossIgnore:ShowSetExpiryPopup(entry)
+    if not entry then return end
+
+    local defaultDays = CrossIgnore.charDB
+        and CrossIgnore.charDB.profile
+        and CrossIgnore.charDB.profile.settings.defaultExpireDays
+        or 0
+
+    local popup, editBox = CreateCustomPopup(
+        L["SET_EXPIRATION"],
+        tostring(defaultDays),
+        function(daysText)
+            local days = tonumber(daysText)
+            if not days or days < 0 then return end
+
+            local expiresAt = (days > 0) and (time() + (days * 86400)) or 0
+
+            local newEntry = {
+                name                = entry.name,
+                server              = entry.server,
+                expires             = expiresAt,
+                lastModifiedExpires = time(),
+            }
+
+            CrossIgnore:EnsureGlobalPresence(newEntry, CrossIgnore.charDB.profile.settings.maxIgnoreLimit or 50)
+            CrossIgnore:SyncLocalToGlobal()
+            CrossIgnore:RefreshBlockedList()
+
+            print(L["PLAYER_EXPIRE_SET"]:format(entry.name, (days == 0 and L["NEVER"] or days)))
+        end
+    )
+
+    popup:Show()
+    editBox:SetFocus()
+end
+
+
 function CrossIgnore:ShowContextMenu(anchorFrame, playerData)
     local menuItems = {
         {
             text = L["EDIT_NOTE"],
             func = function()
-                StaticPopup_Show("CROSSIGNORE_EDIT_NOTE", playerData.name or "Unknown", nil, playerData)
+                self:ShowEditNotePopup(playerData)
             end
         },
         {
             text = L["SET_EXPIRY"],
             func = function()
-                StaticPopup_Show("CROSSIGNORE_SET_EXPIRE", playerData.name or "Unknown", nil, playerData)
+                self:ShowSetExpiryPopup(playerData)
             end
         },
         {
@@ -59,7 +140,7 @@ function CrossIgnore:ShowWordContextMenu(anchorFrame, entry)
         {
             text = L["EDIT_WORD"],
             func = function()
-                StaticPopup_Show("CROSSIGNORE_EDIT_WORD", entry.word or "Unknown", nil, entry)
+                self:ShowEditWordPopup(entry)
             end
         },
         {
@@ -74,133 +155,37 @@ function CrossIgnore:ShowWordContextMenu(anchorFrame, entry)
     ShowStyledDropdown(menuItems, anchorFrame)
 end
 
-StaticPopupDialogs["CROSSIGNORE_SET_EXPIRE"] = {
-    text = L["SET_EXPIRATION"],
-    button1 = L["SET"],
-    button2 = L["CANCEL"],
-    hasEditBox = true,
-    OnShow = function(self)
-        local editBox = self.editBox or _G[self:GetName().."EditBox"]
-        if editBox then
-            local defaultDays = CrossIgnore.charDB
-                and CrossIgnore.charDB.profile
-                and CrossIgnore.charDB.profile.settings.defaultExpireDays
-                or 0
-            editBox:SetText(tostring(defaultDays))
-            editBox:SetFocus()
+function CrossIgnore:ShowEditWordPopup(entry)
+    if not entry then return end
+    local popup, editBox = CreateCustomPopup(
+        L["EDIT_BLOCKED_WORD"],
+        entry.word or "",
+        function(newWord)
+            if newWord == "" then return end
+            entry.word = newWord
+            entry.normalized = newWord:lower()
+            self:UpdateWordsList(_G.CrossIgnoreUI.searchBox:GetText() or "")
+            refreshLeftPanel()
         end
-    end,
-    OnAccept = function(self)
-        local editBox = self.editBox or _G[self:GetName().."EditBox"]
-        local days = tonumber(editBox and editBox:GetText() or "")
-        if not days or days < 0 then return end
+    )
+    popup:Show()
+    editBox:SetFocus()
+end
 
-        local expiresAt = (days > 0) and (time() + (days * 86400)) or 0
-        local targetName = self.data.name
-        local targetServer = self.data.server
-
-        local entry = {
-            name                = targetName,
-            server              = targetServer,
-            expires             = expiresAt,
-            lastModifiedExpires = time(),
-        }
-
-        CrossIgnore:EnsureGlobalPresence(entry, CrossIgnore.charDB.profile.settings.maxIgnoreLimit or 50)
-        CrossIgnore:SyncLocalToGlobal()
-        CrossIgnore:RefreshBlockedList()
-
-        print(L["PLAYER_EXPIRE_SET"]:format(targetName, (days == 0 and L["NEVER"] or days)))
-    end,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-    preferredIndex = STATICPOPUP_NUMDIALOGS,
-}
-
-
-
-StaticPopupDialogs["CROSSIGNORE_EDIT_WORD"] = {
-    text = L["EDIT_BLOCKED_WORD"],
-    button1 = L["SAVE"],
-    button2 = L["CANCEL"],
-    hasEditBox = true,
-    OnShow = function(self)
-        local editBox = self.editBox or _G[self:GetName().."EditBox"]
-        if editBox then
-            editBox:SetText(self.data and self.data.word or "")
-            editBox:SetFocus()
+function CrossIgnore:ShowEditNotePopup(entry)
+    if not entry then return end
+    local popup, editBox = CreateCustomPopup(
+        L["EDIT_NOTE_FOR"],
+        entry.note or "",
+        function(newNote)
+            entry.note = newNote
+            entry.lastModifiedNote = time()
+            self:RefreshBlockedList()
         end
-    end,
-    OnAccept = function(self)
-        local editBox = self.editBox or _G[self:GetName().."EditBox"]
-        local newWord = editBox and editBox:GetText() or ""
-        if newWord == "" then return end
-
-        local targetChannel = self.data.channelName
-        local targetIndex   = self.data.wordIndex
-
-        if CrossIgnoreDB and CrossIgnoreDB.global and CrossIgnoreDB.global.filters then
-            local wordsTable = CrossIgnoreDB.global.filters.words or {}
-            CrossIgnoreDB.global.filters.words = wordsTable
-
-            local channelTable = wordsTable[targetChannel]
-            if channelTable and channelTable[targetIndex] then
-                channelTable[targetIndex] = {
-                    word       = newWord,
-                    normalized = newWord:lower(),
-                }
-            end
-        end
-
-        self.data.word = newWord
-        CrossIgnore:UpdateWordsList(_G.CrossIgnoreUI.searchBox:GetText() or "")
-    end,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-    preferredIndex = STATICPOPUP_NUMDIALOGS,
-}
-
-StaticPopupDialogs["CROSSIGNORE_EDIT_NOTE"] = {
-    text = L["EDIT_NOTE_FOR"],
-    button1 = L["SAVE"],
-    button2 = L["CANCEL"],
-    hasEditBox = true,
-    OnShow = function(self)
-        local editBox = self.editBox or _G[self:GetName().."EditBox"]
-        if editBox then
-            editBox:SetText(self.data and self.data.note or "")
-            editBox:SetFocus()
-        end
-    end,
-    OnAccept = function(self)
-        local editBox = self.editBox or _G[self:GetName().."EditBox"]
-        local newNote = editBox and editBox:GetText() or ""
-        local targetName = self.data.name
-        local targetServer = self.data.server
-
-        local function updateNoteInList(list)
-            for _, entry in ipairs(list) do
-                if entry.name == targetName and entry.server == targetServer then
-                    entry.note = newNote
-                    entry.lastModifiedNote = time()
-                end
-            end
-        end
-
-        updateNoteInList(CrossIgnore.charDB.profile.players or {})
-        updateNoteInList(CrossIgnore.charDB.profile.overLimitPlayers or {})
-        updateNoteInList(CrossIgnore.globalDB.global.players or {})
-        updateNoteInList(CrossIgnore.globalDB.global.overLimitPlayers or {})
-
-        CrossIgnore:RefreshBlockedList()
-    end,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-    preferredIndex = STATICPOPUP_NUMDIALOGS,
-}
+    )
+    popup:Show()
+    editBox:SetFocus()
+end
 
 function CrossIgnore:RemoveSelectedWord(entry)
     if not entry then return end
@@ -218,4 +203,5 @@ function CrossIgnore:RemoveSelectedWord(entry)
     end
 
     self:UpdateWordsList(_G.CrossIgnoreUI and _G.CrossIgnoreUI.searchBox:GetText() or "")
+    refreshLeftPanel()
 end
