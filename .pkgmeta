@@ -1,4 +1,6 @@
 package-as: CrossIgnore
+project-id: 1290810
+wago-id: ZKbeW461
 
 enable-nolib-creation: yes
 
@@ -7,4 +9,3 @@ ignore:
   - .gitignore
   - README.md
   - pkgmeta.yml
-
