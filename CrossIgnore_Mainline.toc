@@ -2,7 +2,7 @@
 ## Title: Cross|cffff7d0aIgnore
 ## Author: Jay
 ## 1.1 Maintainer: Jay @ Tichondrius
-## Version: 1.1
+## Version: @project-version@
 ## Notes: Filter and Spam Blocker, also blocks people who ignore you in LFG.
 ## Notes-ruRU: Блокировщик спама, который позволяет создать глобальный список игнорирования и прочие спам-фильтры, а также блокирует людей, которые игнорируют Вас в LFG
 ## SavedVariables: CrossIgnoreDB, CrossIgnoreMinimapDB
@@ -32,3 +32,4 @@ modules/ignoreoptions.lua
 modules/chatfilteroptions.lua
 modules/importexport.lua
 CrossIgnoreUI.lua
+
