@@ -8,6 +8,8 @@
 ## SavedVariables: CrossIgnoreDB, CrossIgnoreMinimapDB
 ## SavedVariablesPerCharacter: CrossIgnoreSingleDB
 ## IconTexture: Interface\AddOns\CrossGambling\Media\Icon
+## X-Curse-Project-ID: 1290810
+## X-Wago-ID: ZKbeW461
 ## Category-enUS: CrossIgnore
 ## Category-deDE: CrossIgnorieren
 ## Category-esES: CrossIgnorar
@@ -32,4 +34,5 @@ modules/ignoreoptions.lua
 modules/chatfilteroptions.lua
 modules/importexport.lua
 CrossIgnoreUI.lua
+
 
