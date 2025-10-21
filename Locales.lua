@@ -81,14 +81,6 @@ local Locales = {
 		EDIT_NOTE_FOR = "Edit Note for %s:",
 		SAVE = "Save",
 		
-		DEBUG_DUPLICATE_LOG = "|cffcccc00Debug: Duplicate messages are automatically prevented from appearing in this log.|r",
-		DEBUG_TEST_LIVE = "Test Live",
-		DEBUG_FILTER_TEST = "Test your filter",
-		DEBUG_ENTER_TEST = "|cffff0000Enter a message to test.|r",
-		DEBUG_ALLOWED = "|cff00ff00Allowed|r",
-		DEBUG_BLOCKED = "|cffff0000Blocked by '%s' on %s%s|r",
-		DEBUG_STRICT = " |cffff6600(Strict)|r",
-		
 		LEFT_CLICK_OPEN_UI = "Left-Click to open UI",
 		CI_ALERT_LEADER_BLOCKED = "|cffff5555CrossIgnore Alert: Leader Blocked|r",
 		SHOW_MINIMAP_ICON = "Show Minimap Icon",
@@ -107,6 +99,15 @@ local Locales = {
 		AUTO_REPLY_DEFAULT = "CrossIgnore: You are currently being ignored.",
 		AUTO_REPLY_ENABLE_CHECK = "Enable Auto-Reply",
 		AUTO_REPLY_MESSAGE = "Auto-Reply Message",
+
+		DEBUG_DUPLICATE_LOG = "|cffcccc00Debug: Duplicate messages are automatically prevented from appearing in this log.|r",
+		DEBUG_TEST_LIVE = "Test Live",
+		DEBUG_FILTER_TEST = "Test your filter",
+		DEBUG_ENTER_TEST = "|cffff0000Enter a message to test.|r",
+		DEBUG_ALLOWED = "|cff00ff00Allowed|r",
+		DEBUG_BLOCKED = "|cffff0000Blocked by '%s' on %s%s|r",
+		DEBUG_STRICT = " |cffff6600(Strict)|r",
+		
 
     },
 	
@@ -189,14 +190,6 @@ local Locales = {
 		EDIT_NOTE_FOR = "Редактировать заметку для %s:",
 		SAVE = "Сохранить",
 		
-		DEBUG_DUPLICATE_LOG = "|cffcccc00Debug: Duplicate messages are automatically prevented from appearing in this log.|r",
-		DEBUG_TEST_LIVE = "Test Live",
-		DEBUG_FILTER_TEST = "Test your filter",
-		DEBUG_ENTER_TEST = "|cffff0000Enter a message to test.|r",
-		DEBUG_ALLOWED = "|cff00ff00Allowed|r",
-		DEBUG_BLOCKED = "|cffff0000Blocked by '%s' on %s%s|r",
-		DEBUG_STRICT = " |cffff6600(Strict)|r",
-		
 		LEFT_CLICK_OPEN_UI = "ЛКМ - открыть окно аддона",
 		CI_ALERT_LEADER_BLOCKED = "|cffff5555Оповещение CrossIgnore: Лидер заблокирован|r",
 		SHOW_MINIMAP_ICON = "Показывать иконку на миникарте",
@@ -216,6 +209,15 @@ local Locales = {
 		AUTO_REPLY_DEFAULT = "CrossIgnore: В настоящее время Вас игнорируют.",
 		AUTO_REPLY_ENABLE_CHECK = "Включить автоответ",
 		AUTO_REPLY_MESSAGE = "Автоматический ответ",
+
+		DEBUG_DUPLICATE_LOG = "|cffcccc00Debug: Duplicate messages are automatically prevented from appearing in this log.|r",
+		DEBUG_TEST_LIVE = "Test Live",
+		DEBUG_FILTER_TEST = "Test your filter",
+		DEBUG_ENTER_TEST = "|cffff0000Enter a message to test.|r",
+		DEBUG_ALLOWED = "|cff00ff00Allowed|r",
+		DEBUG_BLOCKED = "|cffff0000Blocked by '%s' on %s%s|r",
+		DEBUG_STRICT = " |cffff6600(Strict)|r",
+		
 	},
 
 	frFR = {
@@ -296,14 +298,6 @@ local Locales = {
     	EDIT_NOTE_FOR = "Modifier la note pour %s :",
     	SAVE = "Sauvegarder",
 
-    	DEBUG_DUPLICATE_LOG = "|cffcccc00Debug : Les doublons de messages sont automatiquement empêchés d’apparaître dans ce journal.|r",
-    	DEBUG_TEST_LIVE = "Tester en direct",
-    	DEBUG_FILTER_TEST = "Tester votre filtre",
-    	DEBUG_ENTER_TEST = "|cffff0000Entrez un message à tester.|r",
-    	DEBUG_ALLOWED = "|cff00ff00Autorisé|r",
-    	DEBUG_BLOCKED = "|cffff0000Bloqué par '%s' sur %s%s|r",
-    	DEBUG_STRICT = " |cffff6600(Strict)|r",
-
     	LEFT_CLICK_OPEN_UI = "Clic gauche pour ouvrir l’interface",
     	CI_ALERT_LEADER_BLOCKED = "|cffff5555Alerte CrossIgnore : Chef bloqué|r",
     	SHOW_MINIMAP_ICON = "Afficher l’icône sur la mini-carte",
@@ -322,6 +316,15 @@ local Locales = {
     	AUTO_REPLY_DEFAULT = "CrossIgnore : Vous êtes actuellement ignoré.",
     	AUTO_REPLY_ENABLE_CHECK = "Activer la réponse automatique",
     	AUTO_REPLY_MESSAGE = "Message automatique",
+
+		DEBUG_DUPLICATE_LOG = "|cffcccc00Debug : Les doublons de messages sont automatiquement empêchés d’apparaître dans ce journal.|r",
+    	DEBUG_TEST_LIVE = "Tester en direct",
+    	DEBUG_FILTER_TEST = "Tester votre filtre",
+    	DEBUG_ENTER_TEST = "|cffff0000Entrez un message à tester.|r",
+    	DEBUG_ALLOWED = "|cff00ff00Autorisé|r",
+    	DEBUG_BLOCKED = "|cffff0000Bloqué par '%s' sur %s%s|r",
+    	DEBUG_STRICT = " |cffff6600(Strict)|r",
+		
 	},
 
 }
