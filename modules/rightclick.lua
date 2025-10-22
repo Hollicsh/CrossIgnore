@@ -174,8 +174,11 @@ end
 
 function CrossIgnore:ShowEditNotePopup(entry)
     if not entry then return end
+
+    local title = string.format(L["EDIT_NOTE_FOR"], entry.name or "Unknown")
+
     local popup, editBox = CreateCustomPopup(
-        L["EDIT_NOTE_FOR"],
+        title,
         entry.note or "",
         function(newNote)
             entry.note = newNote
@@ -183,9 +186,11 @@ function CrossIgnore:ShowEditNotePopup(entry)
             self:RefreshBlockedList()
         end
     )
+
     popup:Show()
     editBox:SetFocus()
 end
+
 
 function CrossIgnore:RemoveSelectedWord(entry)
     if not entry then return end
