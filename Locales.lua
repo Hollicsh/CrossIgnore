@@ -210,13 +210,13 @@ local Locales = {
 		AUTO_REPLY_ENABLE_CHECK = "Включить автоответ",
 		AUTO_REPLY_MESSAGE = "Автоматический ответ",
 
-		DEBUG_DUPLICATE_LOG = "|cffcccc00Debug: Duplicate messages are automatically prevented from appearing in this log.|r",
-		DEBUG_TEST_LIVE = "Test Live",
-		DEBUG_FILTER_TEST = "Test your filter",
-		DEBUG_ENTER_TEST = "|cffff0000Enter a message to test.|r",
-		DEBUG_ALLOWED = "|cff00ff00Allowed|r",
-		DEBUG_BLOCKED = "|cffff0000Blocked by '%s' on %s%s|r",
-		DEBUG_STRICT = " |cffff6600(Strict)|r",
+		DEBUG_DUPLICATE_LOG = "|cffcccc00Отладка: Дублирующиеся сообщения автоматически не появляются в этом журнале.|r",
+		DEBUG_TEST_LIVE = "Тест вживую",
+		DEBUG_FILTER_TEST = "Проверка Вашего фильтр",
+		DEBUG_ENTER_TEST = "|cffff0000Введите сообщение для проверки.|r",
+		DEBUG_ALLOWED = "|cff00ff00Допустимый|r",
+		DEBUG_BLOCKED = "|cffff0000Заблокировано '%s' на %s%s|r",
+		DEBUG_STRICT = " |cffff6600(Строгий)|r",
 		
 	},
 
