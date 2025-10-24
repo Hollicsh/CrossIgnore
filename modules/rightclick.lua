@@ -78,8 +78,10 @@ function CrossIgnore:ShowSetExpiryPopup(entry)
         and CrossIgnore.charDB.profile.settings.defaultExpireDays
         or 0
 
+    local title = string.format(L["SET_EXPIRATION"], entry.name or "Unknown")
+
     local popup, editBox = CreateCustomPopup(
-        L["SET_EXPIRATION"],
+        title,
         tostring(defaultDays),
         function(daysText)
             local days = tonumber(daysText)
@@ -210,3 +212,4 @@ function CrossIgnore:RemoveSelectedWord(entry)
     self:UpdateWordsList(_G.CrossIgnoreUI and _G.CrossIgnoreUI.searchBox:GetText() or "")
     refreshLeftPanel()
 end
+
