@@ -5,6 +5,7 @@
 ## Version: @project-version@
 ## Notes: Filter and Spam Blocker, also blocks people who ignore you in LFG.
 ## Notes-ruRU: Блокировщик спама, который позволяет создать глобальный список игнорирования и прочие спам-фильтры, а также блокирует людей, которые игнорируют Вас в LFG
+## Notes-frFR: Bloqueur de spam, permettant de créer une liste globale de blocage et d'autres filtres anti-spam, bloque également les personnes qui vous ignorent dans LFG
 ## SavedVariables: CrossIgnoreDB, CrossIgnoreMinimapDB
 ## SavedVariablesPerCharacter: CrossIgnoreSingleDB
 ## IconTexture: Interface\AddOns\CrossGambling\Media\Icon
@@ -34,5 +35,6 @@ modules/ignoreoptions.lua
 modules/chatfilteroptions.lua
 modules/importexport.lua
 CrossIgnoreUI.lua
+
 
 
