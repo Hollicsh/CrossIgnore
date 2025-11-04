@@ -1,8 +1,10 @@
 ## Interface: 20504
 ## Title: Cross|cffff7d0aIgnore
 ## Author: Jay
-## 1.1 Maintainer: Jay @ Tichondrius
 ## Version: @project-version@
+## X-Website: https://www.curseforge.com/wow/addons/crossignore
+## X-Category: Chat/Communication, Miscellaneous, Unit Frames
+## X-Localizations: enUS, frFR, ruRU
 ## Notes: Filter and Spam Blocker, also blocks people who ignore you in LFG.
 ## Notes-ruRU: Блокировщик спама, который позволяет создать глобальный список игнорирования и прочие спам-фильтры, а также блокирует людей, которые игнорируют Вас в LFG
 ## Notes-frFR: Bloqueur de spam, permettant de créer une liste globale de blocage et d'autres filtres anti-spam, bloque également les personnes qui vous ignorent dans LFG
@@ -35,6 +37,7 @@ modules/ignoreoptions.lua
 modules/chatfilteroptions.lua
 modules/importexport.lua
 CrossIgnoreUI.lua
+
 
 
 
