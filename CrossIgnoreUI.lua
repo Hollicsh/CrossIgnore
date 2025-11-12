@@ -881,8 +881,14 @@ function CrossIgnore:CreateUI()
     CrossIgnoreUI.wordsScrollFrame = wordsScrollFrame
     CrossIgnoreUI.wordsScrollChild = wordsScrollChild
 
-    local newWordInput = CreateEditBox(panels.chatFilter, 200, 24, "BOTTOMLEFT", 15, 70)
-    CrossIgnoreUI.newWordInput = newWordInput
+	local newWordInput = CreateEditBox(panels.chatFilter, 200, 24, "BOTTOMLEFT", 15, 70)
+	CrossIgnoreUI.newWordInput = newWordInput
+
+	newWordInput:SetScript("OnEnterPressed", function(self)
+		AddNewWord()        
+		self:ClearFocus()    
+	end)
+
 
     local channelDropdown = CreateChannelDropdown(panels.chatFilter)
     channelDropdown:SetPoint("TOPLEFT", newWordInput, "TOPRIGHT", -10, 0)
