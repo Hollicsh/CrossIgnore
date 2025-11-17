@@ -1,4 +1,4 @@
-## Interface: 30405
+## Interface: 30405, 38000
 ## Title: Cross|cffff7d0aIgnore
 ## Author: Jay
 ## Version: @project-version@
@@ -37,7 +37,3 @@ modules/ignoreoptions.lua
 modules/chatfilteroptions.lua
 modules/importexport.lua
 CrossIgnoreUI.lua
-
-
-
-
