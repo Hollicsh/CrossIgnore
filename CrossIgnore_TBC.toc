@@ -37,8 +37,3 @@ modules/ignoreoptions.lua
 modules/chatfilteroptions.lua
 modules/importexport.lua
 CrossIgnoreUI.lua
-
-
-
-
-
