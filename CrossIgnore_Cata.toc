@@ -26,7 +26,7 @@
 ## Category-zhTW: Cross忽視
 
 Libs.xml
-Locales.lua
+locales/Locales.xml
 CrossIgnore.lua
 modules/chatfilter.lua
 modules/chatfilterdefaults.lua
