@@ -159,17 +159,39 @@ end
 
 function CrossIgnore:ShowEditWordPopup(entry)
     if not entry then return end
+
+    local oldWord = entry.word
+    local oldNorm = entry.normalized
+
     local popup, editBox = CreateCustomPopup(
         L["EDIT_BLOCKED_WORD"],
         entry.word or "",
         function(newWord)
             if newWord == "" then return end
+
+            local channelName = entry.channelName or entry.channel
+            local wordIndex   = entry.wordIndex
+
+            if CrossIgnoreDB
+                and CrossIgnoreDB.global
+                and CrossIgnoreDB.global.filters
+                and CrossIgnoreDB.global.filters.words
+                and CrossIgnoreDB.global.filters.words[channelName]
+                and CrossIgnoreDB.global.filters.words[channelName][wordIndex]
+            then
+                CrossIgnoreDB.global.filters.words[channelName][wordIndex] = {
+                    word       = newWord,
+                    normalized = newWord:lower(),
+                }
+            end
+
             entry.word = newWord
             entry.normalized = newWord:lower()
+
             self:UpdateWordsList(_G.CrossIgnoreUI.searchBox:GetText() or "")
-            refreshLeftPanel()
         end
     )
+
     popup:Show()
     editBox:SetFocus()
 end
@@ -212,4 +234,5 @@ function CrossIgnore:RemoveSelectedWord(entry)
     self:UpdateWordsList(_G.CrossIgnoreUI and _G.CrossIgnoreUI.searchBox:GetText() or "")
     refreshLeftPanel()
 end
+
 
