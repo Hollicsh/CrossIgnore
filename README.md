@@ -33,7 +33,7 @@ There are a bunch of ignore addons out there, but here’s what sets CrossIgnore
 ## Quick Commands## Quick Commands
 /crossignore   – opens the UI
 
-/ci - Opens the UI
+/ci ui - Opens the UI
 
 /ci showMinimapIcon - Toggle the CrossIgnore icon on the minimap 
 
