@@ -1,16 +1,11 @@
 local addonName, addonTable = ...
 local L = addonTable.L
 
-local function CreateStyledMenuFrame()
-    local frame = CreateFrame("Frame", nil, UIParent, "UIDropDownMenuTemplate")
-    frame:SetFrameStrata("TOOLTIP")
-    frame:Hide()
-    return frame
-end
+local CrossIgnoreMenuFrame = CreateFrame("Frame", "CrossIgnoreMenuFrame", UIParent, "UIDropDownMenuTemplate")
+CrossIgnoreMenuFrame:SetFrameStrata("TOOLTIP")
+CrossIgnoreMenuFrame:Hide()
 
 local function ShowStyledDropdown(items, anchorFrame)
-    local menuFrame = CreateStyledMenuFrame()
-
     local function initialize(self, level)
         if not level then return end
         for _, item in ipairs(items) do
@@ -22,52 +17,45 @@ local function ShowStyledDropdown(items, anchorFrame)
         end
     end
 
-    UIDropDownMenu_Initialize(menuFrame, initialize, "MENU")
-    ToggleDropDownMenu(1, nil, menuFrame, anchorFrame, 0, 0)
+    UIDropDownMenu_Initialize(CrossIgnoreMenuFrame, initialize, "MENU")
+    ToggleDropDownMenu(1, nil, CrossIgnoreMenuFrame, anchorFrame, 0, 0)
 end
 
 local function CreateCustomPopup(title, defaultText, onAccept)
-    local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    local frame = CreateFrame("Frame", "CrossIgnorePopupFrame", UIParent, "BasicFrameTemplateWithInset")
     frame:SetSize(300, 100)
     frame:SetPoint("CENTER")
-    frame:SetBackdrop({
-        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 16,
-        insets = { left=4, right=4, top=4, bottom=4 }
-    })
-    frame:SetBackdropColor(0,0,0,0.8)
-    frame:Hide()
     frame:SetFrameStrata("DIALOG")
+    frame:Hide()
 
-    local titleText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    titleText:SetPoint("TOP", 0, -10)
-    titleText:SetText(title)
+    frame.titleText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    frame.titleText:SetPoint("TOP", 0, -10)
+    frame.titleText:SetText(title)
 
-    local editBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
-    editBox:SetSize(260, 25)
-    editBox:SetPoint("TOP", titleText, "BOTTOM", 0, -10)
-    editBox:SetAutoFocus(true)
-    editBox:SetText(defaultText or "")
+    frame.editBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+    frame.editBox:SetSize(260, 25)
+    frame.editBox:SetPoint("TOP", frame.titleText, "BOTTOM", 0, -10)
+    frame.editBox:SetAutoFocus(true)
+    frame.editBox:SetText(defaultText or "")
 
-    local acceptBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    acceptBtn:SetSize(80, 25)
-    acceptBtn:SetPoint("BOTTOMLEFT", 20, 10)
-    acceptBtn:SetText("Save")
-    acceptBtn:SetScript("OnClick", function()
-        if onAccept then onAccept(editBox:GetText()) end
+    frame.acceptBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    frame.acceptBtn:SetSize(80, 25)
+    frame.acceptBtn:SetPoint("BOTTOMLEFT", 20, 10)
+    frame.acceptBtn:SetText("Save")
+    frame.acceptBtn:SetScript("OnClick", function()
+        if onAccept then onAccept(frame.editBox:GetText()) end
         frame:Hide()
     end)
 
-    local cancelBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    cancelBtn:SetSize(80, 25)
-    cancelBtn:SetPoint("BOTTOMRIGHT", -20, 10)
-    cancelBtn:SetText("Cancel")
-    cancelBtn:SetScript("OnClick", function()
+    frame.cancelBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    frame.cancelBtn:SetSize(80, 25)
+    frame.cancelBtn:SetPoint("BOTTOMRIGHT", -20, 10)
+    frame.cancelBtn:SetText("Cancel")
+    frame.cancelBtn:SetScript("OnClick", function()
         frame:Hide()
     end)
 
-    return frame, editBox
+    return frame, frame.editBox
 end
 
 function CrossIgnore:ShowSetExpiryPopup(entry)
@@ -90,9 +78,9 @@ function CrossIgnore:ShowSetExpiryPopup(entry)
             local expiresAt = (days > 0) and (time() + (days * 86400)) or 0
 
             local newEntry = {
-                name                = entry.name,
-                server              = entry.server,
-                expires             = expiresAt,
+                name = entry.name,
+                server = entry.server,
+                expires = expiresAt,
                 lastModifiedExpires = time(),
             }
 
@@ -107,7 +95,6 @@ function CrossIgnore:ShowSetExpiryPopup(entry)
     popup:Show()
     editBox:SetFocus()
 end
-
 
 function CrossIgnore:ShowContextMenu(anchorFrame, playerData)
     local menuItems = {
@@ -148,7 +135,7 @@ function CrossIgnore:ShowWordContextMenu(anchorFrame, entry)
         {
             text = L["REMOVE_WORD"],
             func = function()
-                CrossIgnore:RemoveSelectedWord(entry)
+                self:RemoveSelectedWord(entry)
             end
         },
         { text = L["CANCEL"], func = function() end }
@@ -160,9 +147,6 @@ end
 function CrossIgnore:ShowEditWordPopup(entry)
     if not entry then return end
 
-    local oldWord = entry.word
-    local oldNorm = entry.normalized
-
     local popup, editBox = CreateCustomPopup(
         L["EDIT_BLOCKED_WORD"],
         entry.word or "",
@@ -170,7 +154,7 @@ function CrossIgnore:ShowEditWordPopup(entry)
             if newWord == "" then return end
 
             local channelName = entry.channelName or entry.channel
-            local wordIndex   = entry.wordIndex
+            local wordIndex = entry.wordIndex
 
             if CrossIgnoreDB
                 and CrossIgnoreDB.global
@@ -180,7 +164,7 @@ function CrossIgnore:ShowEditWordPopup(entry)
                 and CrossIgnoreDB.global.filters.words[channelName][wordIndex]
             then
                 CrossIgnoreDB.global.filters.words[channelName][wordIndex] = {
-                    word       = newWord,
+                    word = newWord,
                     normalized = newWord:lower(),
                 }
             end
@@ -199,10 +183,8 @@ end
 function CrossIgnore:ShowEditNotePopup(entry)
     if not entry then return end
 
-    local title = string.format(L["EDIT_NOTE_FOR"], entry.name or "Unknown")
-
     local popup, editBox = CreateCustomPopup(
-        title,
+        string.format(L["EDIT_NOTE_FOR"], entry.name or "Unknown"),
         entry.note or "",
         function(newNote)
             entry.note = newNote
@@ -214,7 +196,6 @@ function CrossIgnore:ShowEditNotePopup(entry)
     popup:Show()
     editBox:SetFocus()
 end
-
 
 function CrossIgnore:RemoveSelectedWord(entry)
     if not entry then return end
@@ -232,7 +213,5 @@ function CrossIgnore:RemoveSelectedWord(entry)
     end
 
     self:UpdateWordsList(_G.CrossIgnoreUI and _G.CrossIgnoreUI.searchBox:GetText() or "")
-    refreshLeftPanel()
+    if refreshLeftPanel then refreshLeftPanel() end
 end
-
-
