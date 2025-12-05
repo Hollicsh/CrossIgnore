@@ -865,7 +865,7 @@ function CrossIgnore:CreateUI()
     local removeButtonIgnore = CreateButton(panels.ignoreList, L["REMOVE_SELECTED_BTN"], "BOTTOM", 0, 15, 180, 30, RemoveSelectedPlayer)
     CrossIgnoreUI.removeButton = removeButtonIgnore
 
-    local searchBoxChat = CreateEditBox(panels.chatFilter, 425, 24, "TOPLEFT", 15, -25)
+    local searchBoxChat = CreateEditBox(panels.chatFilter, 425, 24, "TOPLEFT", 15, -10)
     local placeholder = searchBoxChat:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     placeholder:SetPoint("LEFT", searchBoxChat, "LEFT", 6, 0)
     placeholder:SetText(L["SEARCH_PLACEHOLDER"])
@@ -876,27 +876,34 @@ function CrossIgnore:CreateUI()
     end)
     CrossIgnoreUI.searchBox = searchBoxChat
 
-    local wordsScrollFrame, wordsScrollChild = CreateScrollFrame(panels.chatFilter, 410, 280, "TOPLEFT", 10, -55)
+    local wordsScrollFrame, wordsScrollChild = CreateScrollFrame(panels.chatFilter, 410, 340, "TOPLEFT", 10, -45)
     wordsScrollChild:SetSize(410, 800)
     CrossIgnoreUI.wordsScrollFrame = wordsScrollFrame
     CrossIgnoreUI.wordsScrollChild = wordsScrollChild
 
-	local newWordInput = CreateEditBox(panels.chatFilter, 200, 24, "BOTTOMLEFT", 15, 70)
+	local newWordInput = CreateEditBox(wordsScrollFrame, 200, 24, "BOTTOMLEFT", 5, -35)
 	CrossIgnoreUI.newWordInput = newWordInput
-
 	newWordInput:SetScript("OnEnterPressed", function(self)
 		AddNewWord()        
 		self:ClearFocus()    
 	end)
-
+	local placeholderInput = newWordInput:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    placeholderInput:SetPoint("LEFT", newWordInput, "LEFT", 6, 0)
+    placeholderInput:SetText(L["SEARCH_PLACEHOLDERINPUT"])
+    newWordInput:SetScript("OnTextChanged", function(self)
+        local text = self:GetText()
+        if text == "" then placeholderInput:Show() else placeholderInput:Hide() end
+    end)
+    CrossIgnoreUI.searchBox = newWordInput
+	
 
     local channelDropdown = CreateChannelDropdown(panels.chatFilter)
     channelDropdown:SetPoint("TOPLEFT", newWordInput, "TOPRIGHT", -10, 0)
     CrossIgnoreUI.channelDropdown = channelDropdown
 
-    local addWordBtn = CreateButton(panels.chatFilter, L["ADD_WORD_BTN"], "BOTTOMLEFT", 10, 40, 90, 24, AddNewWord)
-    local removeWordBtn = CreateButton(panels.chatFilter, L["REMOVE_WORD_BTN"], "BOTTOMLEFT", 100, 40, 90, 24, RemoveSelectedWord)
-    local removeAllBtn = CreateButton(panels.chatFilter, L["REMOVE_ALL_BTN"], "BOTTOMLEFT", 190, 40, 90, 24, function() StaticPopup_Show("CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS") end)
+    local addWordBtn = CreateButton(newWordInput, L["ADD_WORD_BTN"], "BOTTOMLEFT", -5, -30, 90, 24, AddNewWord)
+    local removeWordBtn = CreateButton(newWordInput, L["REMOVE_WORD_BTN"], "BOTTOMLEFT", 100, -30, 90, 24, RemoveSelectedWord)
+    local removeAllBtn = CreateButton(newWordInput, L["REMOVE_ALL_BTN"], "BOTTOMLEFT", 190, -30, 90, 24, function() StaticPopup_Show("CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS") end)
 
     buttons.ignoreList:GetScript("OnClick")()
 end

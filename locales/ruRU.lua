@@ -11,6 +11,7 @@ addonTable.Locales.ruRU = {
     NA_TEXT              = "Н/Д",
     CLOSE_BUTTON         = "Закрыть",
     SEARCH_PLACEHOLDER   = "Поиск...",
+	SEARCH_PLACEHOLDERINPUT   = "Добавить слово...",
     TOTAL_BLOCKED        = "Всего заблокированных игроков: %d",
     NO_PLAYER_SELECTED   = "Не выбран подходящий игрок.",
     CONTEXT_NOT_LOADED   = "Контекстное меню CrossIgnore не загружено.",

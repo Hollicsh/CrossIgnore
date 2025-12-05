@@ -11,6 +11,7 @@ addonTable.Locales.frFR = {
     NA_TEXT              = "N/D",
     CLOSE_BUTTON         = "Fermer",
     SEARCH_PLACEHOLDER   = "Recherche...",
+	SEARCH_PLACEHOLDERINPUT   = "Ajouter un mot...",
     TOTAL_BLOCKED        = "Joueurs bloqués au total : %d",
     NO_PLAYER_SELECTED   = "Aucun joueur valide sélectionné.",
     CONTEXT_NOT_LOADED   = "Le menu contextuel CrossIgnore n'est pas chargé.",

@@ -11,6 +11,7 @@ addonTable.Locales.enUS = {
     NA_TEXT              = "N/A",
     CLOSE_BUTTON         = "Close",
     SEARCH_PLACEHOLDER   = "Search...",
+	SEARCH_PLACEHOLDERINPUT   = "Add Word...",
     TOTAL_BLOCKED        = "Total Blocked Players: %d",
     NO_PLAYER_SELECTED   = "No valid player selected.",
     CONTEXT_NOT_LOADED   = "CrossIgnore context menu not loaded.",
