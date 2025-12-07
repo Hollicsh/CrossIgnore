@@ -166,51 +166,78 @@ function CrossIgnore:RefreshBlockedList(filterText)
         self.counterLabel:SetText(string.format(L["TOTAL_BLOCKED"], #playerList))
     end
 
-    if not UI.header then
-        local headerTitles = { L["PLAYER_NAME_HEADER"], L["SERVER_HEADER"], L["ADDED_HEADER"], L["EXPIRES_HEADER"], L["NOTE_HEADER"] }
-        local colWidths    = { 65, 100, 90, 80, 70 }
-        local xPos = 0
+if not UI.header then
+    local headerTitles = { L["PLAYER_NAME_HEADER"], L["SERVER_HEADER"], L["ADDED_HEADER"], L["EXPIRES_HEADER"], L["NOTE_HEADER"] }
+    local colWidths    = { 65, 100, 90, 80, 70 }
+    local xPos = 0
 
-        UI.header = CreateFrame("Frame", nil, scrollChild)
-        UI.header:SetSize(500, 20)
-        UI.header.bg = UI.header:CreateTexture(nil, "BACKGROUND")
-        UI.header.bg:SetAllPoints()
-        UI.header.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-        UI.header.cols = {}
+    UI.header = CreateFrame("Frame", nil, scrollChild)
+    UI.header:SetSize(500, 24)
+    UI.header:SetPoint("TOPLEFT", 0, -5)
 
-        for i, title in ipairs(headerTitles) do
-            local btn = CreateFrame("Button", nil, UI.header)
-            btn:SetSize(colWidths[i], 20)
-            btn:SetPoint("LEFT", xPos, 0)
+    -- Modern background
+    UI.header.bg = UI.header:CreateTexture(nil, "BACKGROUND")
+    UI.header.bg:SetAllPoints()
+    UI.header.bg:SetColorTexture(0.12, 0.12, 0.12, 0.95)
 
-            local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            fs:SetPoint("CENTER")
-            fs:SetText(title)
-            btn.text = fs
+    -- Subtle bottom border
+    UI.header.border = UI.header:CreateTexture(nil, "OVERLAY")
+    UI.header.border:SetPoint("BOTTOMLEFT")
+    UI.header.border:SetPoint("BOTTOMRIGHT")
+    UI.header.border:SetHeight(1)
+    UI.header.border:SetColorTexture(0.35, 0.35, 0.35, 1)
 
-            btn:SetScript("OnEnter", function()
-                btn.text:SetTextColor(1, 1, 0)
-            end)
-            btn:SetScript("OnLeave", function()
-                btn.text:SetTextColor(1, 1, 1)
-            end)
-            btn:SetScript("OnClick", function()
-                local mapped = playerColumnMap[title] or "name"
-                if playerSortKey == mapped then
-                    playerSortAsc = not playerSortAsc
-                else
-                    playerSortKey = mapped
-                    playerSortAsc = true
-                end
-                CrossIgnore:RefreshBlockedList(filterText)
-            end)
+    UI.header.cols = {}
 
-            UI.header.cols[i] = btn
-            xPos = xPos + colWidths[i]
-        end
+    for i, title in ipairs(headerTitles) do
+        local btn = CreateFrame("Button", nil, UI.header)
+        btn:SetSize(colWidths[i], 24)
+        btn:SetPoint("LEFT", xPos, 0)
 
-        UI.header:SetPoint("TOPLEFT", 0, -5)
+        -- Cleaner modern font
+        local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        fs:SetPoint("CENTER")
+        fs:SetText(title)
+        btn.text = fs
+		btn.text:SetTextColor(0.9, 0.9, 0.9)
+
+        btn:SetScript("OnEnter", function()
+            btn.text:SetTextColor(1, 0.82, 0) 
+        end)
+        btn:SetScript("OnLeave", function()
+            local mapped = playerColumnMap[title]
+            if playerSortKey == mapped then
+                btn.text:SetTextColor(1, 0.82, 0)
+            else
+                btn.text:SetTextColor(0.9, 0.9, 0.9)
+            end
+        end)
+
+        btn:SetScript("OnClick", function()
+            local mapped = playerColumnMap[title] or "name"
+            if playerSortKey == mapped then
+                playerSortAsc = not playerSortAsc
+            else
+                playerSortKey = mapped
+                playerSortAsc = true
+            end
+            CrossIgnore:RefreshBlockedList(filterText)
+        end)
+
+        UI.header.cols[i] = btn
+        xPos = xPos + colWidths[i]
     end
+end
+
+for _, btn in ipairs(UI.header.cols) do
+    local title = btn.text:GetText()
+    if playerColumnMap[title] == playerSortKey then
+        btn.text:SetTextColor(1, 0.82, 0)
+    else
+        btn.text:SetTextColor(0.9, 0.9, 0.9) 
+    end
+end
+
     UI.header:Show()
 
     local yOffset = -25
@@ -373,55 +400,65 @@ function CrossIgnore:UpdateWordsList(searchText)
     wipe(UI.wordActiveRows)
 
     if not UI.wordsHeader then
-        local headers = { L["BANNED_WORDS_HEADER2"], L["CHAT_TYPE_HEADER"], L["STRICT_BAN_HEADER"] }
-        local colWidths = { 180, 140, 80 }
-        local xPos = 10
+    local headers = { L["BANNED_WORDS_HEADER2"], L["CHAT_TYPE_HEADER"], L["STRICT_BAN_HEADER"] }
+    local colWidths = { 180, 140, 80 }
+    local xPos = 10
 
-        UI.wordsHeader = CreateFrame("Frame", nil, scrollChild)
-        UI.wordsHeader:SetSize(420, 25)
-        UI.wordsHeader:SetPoint("TOPLEFT", 0, 0)
-        UI.wordsHeader.bg = UI.wordsHeader:CreateTexture(nil, "BACKGROUND")
-        UI.wordsHeader.bg:SetAllPoints()
-        UI.wordsHeader.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    UI.wordsHeader = CreateFrame("Frame", nil, scrollChild)
+    UI.wordsHeader:SetSize(420, 24)
+    UI.wordsHeader:SetPoint("TOPLEFT", 0, 0)
 
-        UI.wordsHeader.cols = {}
+    UI.wordsHeader.bg = UI.wordsHeader:CreateTexture(nil, "BACKGROUND")
+    UI.wordsHeader.bg:SetAllPoints()
+    UI.wordsHeader.bg:SetColorTexture(0.12, 0.12, 0.12, 0.95)
 
-        for i, title in ipairs(headers) do
-            local btn = CreateFrame("Button", nil, UI.wordsHeader)
-            btn:SetSize(colWidths[i], 25)
-            btn:SetPoint("LEFT", xPos, 0)
+    UI.wordsHeader.border = UI.wordsHeader:CreateTexture(nil, "OVERLAY")
+    UI.wordsHeader.border:SetPoint("BOTTOMLEFT")
+    UI.wordsHeader.border:SetPoint("BOTTOMRIGHT")
+    UI.wordsHeader.border:SetHeight(1)
+    UI.wordsHeader.border:SetColorTexture(0.35, 0.35, 0.35, 1)
 
-            local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            fs:SetPoint("CENTER")
-            fs:SetText(title)
-            btn.text = fs
+    UI.wordsHeader.cols = {}
 
-            btn:SetScript("OnEnter", function()
-                btn.text:SetTextColor(1, 1, 0)
-            end)
-            btn:SetScript("OnLeave", function()
-                local mapped = wordColumnMap[title]
-                if wordSortKey == mapped then
-                    btn.text:SetTextColor(1, 1, 0)
-                else
-                    btn.text:SetTextColor(1, 1, 1)
-                end
-            end)
-            btn:SetScript("OnClick", function()
-                local key = wordColumnMap[title]
-                if wordSortKey == key then
-                    wordSortAsc = not wordSortAsc
-                else
-                    wordSortKey = key
-                    wordSortAsc = true
-                end
-                CrossIgnore:UpdateWordsList(searchText)
-            end)
+    for i, title in ipairs(headers) do
+        local btn = CreateFrame("Button", nil, UI.wordsHeader)
+        btn:SetSize(colWidths[i], 24)
+        btn:SetPoint("LEFT", xPos, 0)
 
-            UI.wordsHeader.cols[i] = btn
-            xPos = xPos + colWidths[i]
-        end
+        local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        fs:SetPoint("CENTER")
+        fs:SetText(title)
+        btn.text = fs
+        btn.text:SetTextColor(0.9, 0.9, 0.9)
+
+        btn:SetScript("OnEnter", function()
+            btn.text:SetTextColor(1, 0.82, 0)
+        end)
+        btn:SetScript("OnLeave", function()
+            local mapped = wordColumnMap[title]
+            if wordSortKey == mapped then
+				btn.text:SetTextColor(1, 0.82, 0)
+			else
+				btn.text:SetTextColor(0.9, 0.9, 0.9) 
+            end
+        end)
+
+        btn:SetScript("OnClick", function()
+            local key = wordColumnMap[title]
+            if wordSortKey == key then
+                wordSortAsc = not wordSortAsc
+            else
+                wordSortKey = key
+                wordSortAsc = true
+            end
+            CrossIgnore:UpdateWordsList(searchText)
+        end)
+
+        UI.wordsHeader.cols[i] = btn
+        xPos = xPos + colWidths[i]
     end
+end
+
 
     for _, btn in ipairs(UI.wordsHeader.cols) do
         local title = btn.text:GetText()
