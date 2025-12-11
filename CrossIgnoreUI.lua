@@ -772,7 +772,9 @@ function CrossIgnore:CreateUI()
 
     CreateLabel(CrossIgnoreUI, L["TITLE_HEADER"], "TOP", 0, -12, "GameFontHighlightLarge")
     CreateButton(CrossIgnoreUI, L["CLOSE_BUTTON"], "TOPRIGHT", -10, -10, 70, 25, function() CrossIgnoreUI:Hide() end)
-
+	
+	tinsert(UISpecialFrames, "CrossIgnoreUI")
+	
     local leftPanel = CreateFrame("Frame", nil, CrossIgnoreUI, "BackdropTemplate")
     leftPanel:SetBackdrop({
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -939,8 +941,8 @@ function CrossIgnore:CreateUI()
     CrossIgnoreUI.channelDropdown = channelDropdown
 
     local addWordBtn = CreateButton(newWordInput, L["ADD_WORD_BTN"], "BOTTOMLEFT", -5, -30, 90, 24, AddNewWord)
-    local removeWordBtn = CreateButton(newWordInput, L["REMOVE_WORD_BTN"], "BOTTOMLEFT", 100, -30, 90, 24, RemoveSelectedWord)
-    local removeAllBtn = CreateButton(newWordInput, L["REMOVE_ALL_BTN"], "BOTTOMLEFT", 190, -30, 90, 24, function() StaticPopup_Show("CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS") end)
+    local removeWordBtn = CreateButton(newWordInput, L["REMOVE_WORD_BTN"], "BOTTOMLEFT", 85, -30, 90, 24, RemoveSelectedWord)
+    local removeAllBtn = CreateButton(newWordInput, L["REMOVE_ALL_BTN"], "BOTTOMLEFT", 170, -30, 90, 24, function() StaticPopup_Show("CROSSIGNORE_CONFIRM_REMOVE_ALL_WORDS") end)
 
     buttons.ignoreList:GetScript("OnClick")()
 end
