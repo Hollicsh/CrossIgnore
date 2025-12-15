@@ -91,6 +91,7 @@ function CrossIgnore:OnInitialize()
     self:InitDB()
     self:InitMinimap()
 	self:LoadDefaultBlockedWords()
+	self:StartPurgeRemovedIgnores()
 
     if self.ChatFilter and self.ChatFilter.Initialize then
         self.ChatFilter:Initialize()
@@ -180,6 +181,76 @@ function CrossIgnore:GetActivePlayerTables()
         return self.charDB.profile.players, self.charDB.profile.overLimitPlayers
     end
 end
+
+function CrossIgnore:StartPurgeRemovedIgnores()
+    if not CrossIgnoreDB or not CrossIgnoreDB.players then return end
+    if self._purgeTicker then return end
+
+    local now = time()
+    local cutoff = now - REMOVE_TTL_SECONDS
+    local index = #CrossIgnoreDB.players
+
+    self._purgeTicker = C_Timer.NewTicker(0.02, function()
+        local removed = 0
+
+        while index > 0 and removed < PURGE_BATCH_SIZE do
+            local entry = CrossIgnoreDB.players[index]
+
+            if entry
+               and entry.markedAt
+               and entry.markedAt <= cutoff
+            then
+                table.remove(CrossIgnoreDB.players, index)
+                removed = removed + 1
+            end
+
+            index = index - 1
+        end
+
+        if index <= 0 then
+            self._purgeTicker:Cancel()
+            self._purgeTicker = nil
+        end
+    end)
+end
+
+
+function CrossIgnore:ClearAllIgnoredPlayers()
+    local players, overLimitPlayers = self:GetActivePlayerTables()
+
+    local snapshot = {}
+
+    local function collect(list)
+        for _, entry in ipairs(list or {}) do
+            local name = entry.name
+            local realm = entry.server or entry.realm
+            if name and realm then
+                snapshot[#snapshot + 1] = name .. "-" .. realm
+            end
+        end
+    end
+
+    collect(players)
+    collect(overLimitPlayers)
+
+    for _, fullName in ipairs(snapshot) do
+        self:maybeMarkPendingRemoval(fullName)
+    end
+
+    for _, fullName in ipairs(snapshot) do
+        self:DelIgnore(fullName)
+    end
+
+    self.selectedPlayer = nil
+    self.selectedRow = nil
+
+    if CrossIgnoreUI and CrossIgnoreUI.searchBox then
+        self:RefreshBlockedList(CrossIgnoreUI.searchBox:GetText())
+    else
+        self:RefreshBlockedList()
+    end
+end
+
 
 function CrossIgnore:GetAllLists()
     return self.charDB.profile.players,

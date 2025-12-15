@@ -16,6 +16,9 @@ addonTable.Locales.enUS = {
     NO_PLAYER_SELECTED   = "No valid player selected.",
     CONTEXT_NOT_LOADED   = "CrossIgnore context menu not loaded.",
     WORD_CONTEXT_NOT_LOADED = "CrossIgnore word context menu not loaded.",
+	REMOVE_ALL_PLAYERS_CONFIRM = "Are you sure you want to remove ALL ignored players?\n\nThis cannot be undone.",
+	REMOVE_ALL_BTN = "Remove All",
+
 
     PLAYER_NAME_HEADER   = "Player Name",
     SERVER_HEADER        = "Server",

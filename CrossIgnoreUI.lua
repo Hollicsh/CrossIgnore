@@ -754,6 +754,26 @@ function CrossIgnore:CreateUI()
         whileDead = true,
         hideOnEscape = true,
     }
+	
+	StaticPopupDialogs = StaticPopupDialogs or {}
+
+	StaticPopupDialogs["CROSSIGNORE_CONFIRM_REMOVE_ALL_PLAYERS"] = {
+		text = L["REMOVE_ALL_PLAYERS_CONFIRM"]
+			or "Are you sure you want to remove ALL ignored players?\n\nThis cannot be undone.",
+		button1 = L["YES_BUTTON"] or "Yes",
+		button2 = L["NO_BUTTON"] or "No",
+		OnAccept = function()
+			if CrossIgnore and CrossIgnore.ClearAllIgnoredPlayers then
+				CrossIgnore:ClearAllIgnoredPlayers()
+				CrossIgnore.selectedPlayer = nil
+				CrossIgnore.selectedRow = nil
+				CrossIgnore:RefreshBlockedList()
+			end
+		end,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+	}
 
     CrossIgnoreUI = CreateFrame("Frame", "CrossIgnoreUI", UIParent, "BackdropTemplate")
     CrossIgnoreUI:SetSize(630, 520)
@@ -901,8 +921,47 @@ function CrossIgnore:CreateUI()
     CrossIgnoreUI.scrollFrame = scrollFrameIgnore
     CrossIgnoreUI.scrollChild = scrollChildIgnore
 
-    local removeButtonIgnore = CreateButton(panels.ignoreList, L["REMOVE_SELECTED_BTN"], "BOTTOM", 0, 15, 180, 30, RemoveSelectedPlayer)
-    CrossIgnoreUI.removeButton = removeButtonIgnore
+
+	local footer = CreateFrame("Frame", nil, panels.ignoreList)
+	footer:SetPoint("BOTTOMLEFT", 10, 8)
+	footer:SetPoint("BOTTOMRIGHT", -10, 8)
+	footer:SetHeight(34)
+
+	local divider = footer:CreateTexture(nil, "OVERLAY")
+	divider:SetPoint("TOPLEFT")
+	divider:SetPoint("TOPRIGHT")
+	divider:SetHeight(1)
+	divider:SetColorTexture(0.35, 0.35, 0.35, 0.6)
+
+	local removeSelectedBtn = CreateButton(
+		footer,
+		L["REMOVE_SELECTED_BTN"],
+		"CENTER",
+		0, 0,
+		150, 26,
+		RemoveSelectedPlayer
+	)
+	CrossIgnoreUI.removeButton = removeSelectedBtn
+
+
+	local removeAllBtnIgnore = CreateButton(
+		footer,
+		L["REMOVE_ALL_BTN"] or "Remove All",
+		"RIGHT",
+		0, 0,
+		80, 26,
+		function()
+			StaticPopup_Show("CROSSIGNORE_CONFIRM_REMOVE_ALL_PLAYERS")
+		end
+	)
+	removeAllBtnIgnore:GetFontString():SetTextColor(1, 0.45, 0.45)
+
+	removeAllBtnIgnore:HookScript("OnEnter", function(self)
+		self:GetFontString():SetTextColor(1, 0.25, 0.25)
+	end)
+	removeAllBtnIgnore:HookScript("OnLeave", function(self)
+		self:GetFontString():SetTextColor(1, 0.45, 0.45)
+	end)
 
     local searchBoxChat = CreateEditBox(panels.chatFilter, 425, 24, "TOPLEFT", 15, -10)
     local placeholder = searchBoxChat:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
