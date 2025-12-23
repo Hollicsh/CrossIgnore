@@ -25,15 +25,37 @@
 ## Category-zhCN: Cross忽视
 ## Category-zhTW: Cross忽視
 
+
+## Libraries / Locale
 Libs.xml
 locales/Locales.xml
+
+## Core
 CrossIgnore.lua
+
+## Chat Filter / Logic
 modules/chatfilter.lua
 modules/chatfilterdefaults.lua
-modules/rightclick.lua
 modules/blockhandler.lua
+modules/rightclick.lua
+modules/importexport.lua
+
+## Options
 modules/options.lua
 modules/ignoreoptions.lua
 modules/chatfilteroptions.lua
-modules/importexport.lua
-CrossIgnoreUI.lua
+
+## NEW MODULAR UI 
+UI/Theme.lua
+UI/Widgets.lua
+UI/Table.lua
+
+Data/Ignore.lua
+Data/Words.lua
+
+UI/IgnoreList.lua
+UI/WordFilter.lua
+UI/Core.lua
+
+## UI ENTRY (hooks CreateUI / Refresh)
+CrossIgnore_UI_Entry.lua
