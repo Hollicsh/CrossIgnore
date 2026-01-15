@@ -1,4 +1,4 @@
-## Interface: 20505
+## Interface: 20504, 20505
 ## Title: Cross|cffff7d0aIgnore
 ## Author: Jay
 ## Version: @project-version@
@@ -59,3 +59,4 @@ UI/Core.lua
 
 ## UI ENTRY (hooks CreateUI / Refresh)
 CrossIgnore_UI_Entry.lua
+
