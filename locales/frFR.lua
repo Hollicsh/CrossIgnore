@@ -103,6 +103,8 @@ addonTable.Locales.frFR = {
     AUTO_REPLY_ENABLE_CHECK = "Activer la réponse automatique",
     AUTO_REPLY_MESSAGE = "Message automatique",
 
+    HIDE_BLIZZ_ENABLE_CHECK = "Hide Blizzard/System messages",
+
     DEBUG_DUPLICATE_LOG = "|cffcccc00Debug : Les doublons de messages sont automatiquement empêchés d’apparaître dans ce journal.|r",
     DEBUG_TEST_LIVE = "Tester en direct",
     DEBUG_FILTER_TEST = "Tester votre filtre",

@@ -59,5 +59,17 @@ function CrossIgnore:CreateIgnoreOptions(parent)
         local msg = autoReplyBox:GetText()
         CrossIgnore.charDB.profile.settings.autoReplyMessage = msg
     end)
+
+    local blizzLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    blizzLabel:SetPoint("TOPLEFT", autoReplyBox, "BOTTOMLEFT", 0, -18)
+    blizzLabel:SetText(L["HIDE_BLIZZ_ENABLE_CHECK"])
+
+    local blizzCheckbox = CreateFrame("CheckButton", "CrossIgnoreHideBlizzCheckbox", parent, "ChatConfigCheckButtonTemplate")
+    blizzCheckbox:SetPoint("LEFT", blizzLabel, "RIGHT", 10, 0)
+    blizzCheckbox:SetChecked(CrossIgnore.charDB.profile.settings.hideBlizzardMessages or false)
+    blizzCheckbox:SetScript("OnClick", function(button)
+        local value = button:GetChecked()
+        CrossIgnore.charDB.profile.settings.hideBlizzardMessages = value and true or false
+    end)
 end
 

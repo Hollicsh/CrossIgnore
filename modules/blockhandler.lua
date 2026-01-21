@@ -13,6 +13,20 @@ local BLOCK_MISC_EVENTS = {
     "PARTY_INVITE_REQUEST",
 }
 
+local BLOCK_BLIZZ_EVENTS = {
+    "CHAT_MSG_SYSTEM",
+    "CHAT_MSG_LOOT",
+    "CHAT_MSG_MONEY",
+    "CHAT_MSG_CURRENCY",
+    "CHAT_MSG_COMBAT_XP_GAIN",
+    "CHAT_MSG_COMBAT_FACTION_CHANGE",
+    "CHAT_MSG_SKILL",
+    "CHAT_MSG_ACHIEVEMENT",
+    "CHAT_MSG_GUILD_ACHIEVEMENT",
+    "CHAT_MSG_OPENING",
+    "CHAT_MSG_CHANNEL_NOTICE",
+}
+
 local function IsBlockedPlayer(sender)
     if not sender then return false end
     local fullName = CrossIgnore:NormalizePlayerName(sender)
@@ -46,6 +60,24 @@ local function HookWhisperFrames()
     end
 end
 
+local function BlizzardEventFilter(_, event, msg, sender, ...)
+    local settings = CrossIgnore and CrossIgnore.db and CrossIgnore.db.profile and CrossIgnore.db.profile.settings
+    if not settings or not settings.hideBlizzardMessages then
+        return false
+    end
+
+    if event == "CHAT_MSG_CHANNEL_NOTICE" then
+        local noticeType = msg
+        if noticeType == "YOU_CHANGED" or noticeType == "YOU_JOINED" or noticeType == "YOU_LEFT" then
+            return true
+        end
+        return false
+    end
+
+    return true
+end
+
+
 local function BlockEventFrameHandler(self, event, ...)
     local name = UnitName("npc") or UnitName("target") or UnitName("mouseover")
     if name and IsBlockedPlayer(name) then
@@ -60,6 +92,10 @@ end
 function BlockHandler:Register()
     for _, event in ipairs(BLOCK_CHAT_EVENTS) do
         ChatFrame_AddMessageEventFilter(event, ChatEventFilter)
+    end
+
+    for _, event in ipairs(BLOCK_BLIZZ_EVENTS) do
+        ChatFrame_AddMessageEventFilter(event, BlizzardEventFilter)
     end
 
     local frame = CreateFrame("Frame")
@@ -96,6 +132,9 @@ function BlockHandler:Initialize()
     local settings = CrossIgnore.db.profile.settings
     if settings.forceBlockAllWhispers == nil then
         settings.forceBlockAllWhispers = true
+    end
+    if settings.hideBlizzardMessages == nil then
+        settings.hideBlizzardMessages = false
     end
 end
 

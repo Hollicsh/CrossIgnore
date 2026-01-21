@@ -103,6 +103,8 @@ addonTable.Locales.ruRU = {
     AUTO_REPLY_ENABLE_CHECK = "Включить автоответ",
     AUTO_REPLY_MESSAGE = "Автоматический ответ",
 
+    HIDE_BLIZZ_ENABLE_CHECK = "Hide Blizzard/System messages",
+
     DEBUG_DUPLICATE_LOG = "|cffcccc00Отладка: Дублирующиеся сообщения не будут автоматически появляться в этом журнале.|r",
     DEBUG_TEST_LIVE = "Тест вживую",
     DEBUG_FILTER_TEST = "Проверка Вашего фильтра",

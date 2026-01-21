@@ -104,6 +104,8 @@ addonTable.Locales.enUS = {
     AUTO_REPLY_ENABLE_CHECK = "Enable Auto-Reply",
     AUTO_REPLY_MESSAGE = "Auto-Reply Message",
 
+    HIDE_BLIZZ_ENABLE_CHECK = "Hide Blizzard/System messages",
+
     DEBUG_DUPLICATE_LOG = "|cffcccc00Debug: Duplicate messages are automatically prevented from appearing in this log.|r",
     DEBUG_TEST_LIVE = "Test Live",
     DEBUG_FILTER_TEST = "Test your filter",
