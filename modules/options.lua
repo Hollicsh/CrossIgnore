@@ -13,19 +13,22 @@ function CrossIgnore:CreateOptionsUI(parent)
     local lfgCheckbox = CreateFrame("CheckButton", "CrossIgnoreLFGBlockCheckbox", parent, "ChatConfigCheckButtonTemplate")
     lfgCheckbox:SetPoint("LEFT", lfgLabel, "RIGHT", 10, 0)
     lfgCheckbox:SetChecked(CrossIgnore.charDB.profile.settings.LFGBlock)
+
     lfgCheckbox:SetScript("OnClick", function(button)
-        local value = button:GetChecked()
+        local value = button:GetChecked() and true or false
         CrossIgnore.charDB.profile.settings.LFGBlock = value
         print("LFG Block " .. (value and "enabled" or "disabled"))
     end)
 
     lfgCheckbox:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(L["AUTOMATICALLY_BLOCK_LEADER_OF_THE_GROUP"], 1, 1, 1, true)
+        GameTooltip:SetText(L["AUTOMATICALLY_BLOCK_LEADER_OF_THE_GROUP"], 1, 1, 1)
+        GameTooltip:SetClampedToScreen(true)
+        GameTooltip:SetMaximumWidth(320)
         GameTooltip:Show()
     end)
+
     lfgCheckbox:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
 end
-
