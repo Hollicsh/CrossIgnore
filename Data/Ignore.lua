@@ -3,7 +3,10 @@ local L = addonTable.L
 addonTable.Data = addonTable.Data or {}
 local Data = addonTable.Data
 
-local function safeLower(s) return tostring(s or ""):lower() end
+local function safeLower(s)
+  if type(s) ~= "string" then return "" end
+  return s:lower()
+end
 
 function Data.BuildPlayerList(CrossIgnore, filterText)
   filterText = safeLower(filterText or "")

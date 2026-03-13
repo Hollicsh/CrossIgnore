@@ -12,8 +12,12 @@ local TableWidget = UI.TableWidget
 local M = {}
 UI.WordFilter = M
 
+local function safeString(value)
+  return type(value) == "string" and value or ""
+end
+
 local function CapitalizeWords(str)
-  str = tostring(str or "")
+  str = safeString(str)
   return (str:gsub("(%a)([%w_']*)", function(first, rest)
     return first:upper() .. rest:lower()
   end))
@@ -105,9 +109,10 @@ function M:Build(panel, CrossIgnore, CrossIgnoreDB)
             if type(channelTable[entry.wordIndex]) == "table" then
               channelTable[entry.wordIndex].strict = newVal
             else
+              local existingWord = safeString(channelTable[entry.wordIndex])
               channelTable[entry.wordIndex] = {
-                word = channelTable[entry.wordIndex],
-                normalized = tostring(channelTable[entry.wordIndex]):lower(),
+                word = existingWord,
+                normalized = existingWord:lower(),
                 strict = newVal
               }
             end
@@ -182,7 +187,7 @@ function M:AddNewWord(newWordInput)
   if CrossIgnore.ChatFilter and CrossIgnore.ChatFilter.NormalizeChannelKey then
     channel = CrossIgnore.ChatFilter:NormalizeChannelKey(channel):lower()
   else
-    channel = tostring(channel):lower()
+    channel = safeString(channel):lower()
   end
 
   CrossIgnore.ChatFilter:AddWord(word, channel, strict)

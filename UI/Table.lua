@@ -9,7 +9,10 @@ local TableWidget = {}
 TableWidget.__index = TableWidget
 UI.TableWidget = TableWidget
 
-local function safeLower(s) return tostring(s or ""):lower() end
+local function safeLower(s)
+  if type(s) ~= "string" then return "" end
+  return s:lower()
+end
 
 function TableWidget:New(parent, opts)
   local o = setmetatable({}, self)

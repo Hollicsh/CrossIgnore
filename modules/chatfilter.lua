@@ -17,16 +17,32 @@ local CHAT_EVENTS = {
 
 local channelCache = {}
 
+local function safeString(value)
+    return type(value) == "string" and value or ""
+end
+
+local function safeLower(value)
+    local text = safeString(value)
+    if text == "" then
+        return ""
+    end
+    return text:lower()
+end
+
 local function RefreshChannelCache()
     wipe(channelCache)
     local chList = { GetChannelList() }
     for i = 1, #chList, 3 do
-        local num  = tostring(chList[i])
-        local name = tostring(chList[i + 1])
-        local cleanName = name:lower()
-        channelCache[num] = cleanName
-        channelCache[cleanName] = cleanName
-        channelCache[name] = cleanName
+        local num = chList[i]
+        local name = safeString(chList[i + 1])
+        if name ~= "" then
+            local cleanName = safeLower(name)
+            if type(num) == "number" then
+                channelCache[tostring(num)] = cleanName
+            end
+            channelCache[cleanName] = cleanName
+            channelCache[name] = cleanName
+        end
     end
 end
 
@@ -38,12 +54,17 @@ f:SetScript("OnEvent", RefreshChannelCache)
 RefreshChannelCache()
 
 local function NormalizeChannelKey(channel)
-    local key = tostring(channel or "All Channels")
-    if key == "" or key == "nil" then
+    local key
+    if type(channel) == "number" then
+        key = tostring(channel)
+    else
+        key = safeString(channel)
+    end
+    if key == "" then
         return "all channels"
     end
-    local normalized = channelCache[key:lower()] or key
-    return normalized:lower()
+    local normalized = channelCache[safeLower(key)] or key
+    return safeLower(normalized)
 end
 function ChatFilter:NormalizeChannelKey(ch)
     return NormalizeChannelKey(ch)
@@ -54,7 +75,7 @@ local function GetChannelCategory(event, ...)
         for i = 1, select("#", ...) do
             local a = select(i, ...)
             if type(a) == "string" and a ~= "" then
-                local clean = a:gsub("^%d+%.%s*", ""):lower()
+                local clean = safeLower(a:gsub("^%d+%.%s*", ""))
                 return channelCache[clean] or clean
             end
         end
@@ -193,10 +214,10 @@ local function CompilePatterns()
 end
 
 local function IsFilteredMessage(msg, sender, event, ...)
-    msg = msg or ""
-    sender = sender or ""
-    local msgLower = msg:lower()
-    local senderLower = sender:lower()
+    msg = safeString(msg)
+    sender = safeString(sender)
+    local msgLower = safeLower(msg)
+    local senderLower = safeLower(sender)
 
     local filters = ChatFilter:GetFilters()
 
@@ -266,14 +287,17 @@ local recentMessages = {}
 local DUPLICATE_EXPIRY = 60 
 
 local function IsDuplicate(msg, sender)
-    local key = sender .. "|" .. msg
+    msg = safeString(msg)
+    sender = safeString(sender)
     local now = time()
+    recentMessages[sender] = recentMessages[sender] or {}
+    local senderMessages = recentMessages[sender]
 
-    if recentMessages[key] and now - recentMessages[key] < DUPLICATE_EXPIRY then
+    if senderMessages[msg] and now - senderMessages[msg] < DUPLICATE_EXPIRY then
         return true
     end
 
-    recentMessages[key] = now
+    senderMessages[msg] = now
     return false
 end
 
@@ -285,18 +309,23 @@ cleanupFrame:SetScript("OnUpdate", function(self, elapsed)
     self.elapsed = 0
 
     local now = time()
-    for key, ts in pairs(recentMessages) do
-        if now - ts >= DUPLICATE_EXPIRY then
-            recentMessages[key] = nil
+    for sender, messages in pairs(recentMessages) do
+        for msg, ts in pairs(messages) do
+            if now - ts >= DUPLICATE_EXPIRY then
+                messages[msg] = nil
+            end
+        end
+        if not next(messages) then
+            recentMessages[sender] = nil
         end
     end
 end)
 
 local function IsFilteredForChannel(msg, sender, channelKey)
-    msg = msg or ""
-    sender = sender or ""
-    local msgLower = msg:lower()
-    local senderLower = sender:lower()
+    msg = safeString(msg)
+    sender = safeString(sender)
+    local msgLower = safeLower(msg)
+    local senderLower = safeLower(sender)
 
     local filters = CrossIgnore.ChatFilter:GetFilters()
     local list = filters[channelKey] or {}
