@@ -49,7 +49,10 @@ local function HookWhisperFrames()
             frame.__CrossIgnoreHooked = true
             hooksecurefunc(frame, "AddMessage", function(self, text, ...)
                 if type(text) == "string" then
-                    local name = string.match(text, "|Hplayer:([^:]+)")
+                    local ok, name = pcall(string.match, text, "|Hplayer:([^:]+)")
+                    if not ok then
+                        return
+                    end
                     if name and IsBlockedPlayer(name) then
                         self:Clear() 
                         return
