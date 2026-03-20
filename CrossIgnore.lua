@@ -165,10 +165,19 @@ end
 
 local function StripRealm(name) return (name and name:match("^[^%-]+")) or name end
 local function MakeKey(base, realm) if not base or not realm then return nil end return base .. "-" .. realm end
+local function ToSafeString(value)
+    if value == nil then
+        return nil
+    end
+
+    return tostring(value)
+end
 
 function CrossIgnore:NormalizePlayerName(name)
-    if not name or name == "" then return nil, nil, nil end
-    local base, realm = strsplit("-", name)
+    local safeName = ToSafeString(name)
+    if not safeName or safeName == "" then return nil, nil, nil end
+
+    local base, realm = strsplit("-", safeName)
     if not base or base == "" then return nil, nil, nil end
     realm = realm or currentRealm or GetNormalizedRealmName() or "Unknown"
     return base .. "-" .. realm, base, realm
@@ -494,8 +503,6 @@ end
 
 
 function CrossIgnore:AddIgnore(name, note, duration)
-    if not name or name == "" then return end
-
     local fullName, base, realm = self:NormalizePlayerName(name)
     if not base or not realm then
         realm = GetNormalizedRealmName()
@@ -554,8 +561,6 @@ function CrossIgnore:maybeMarkPendingRemoval(base, realm, addedBy)
 end
 
 function CrossIgnore:DelIgnore(name)
-    if not name or name == "" then return end
-
     local fullName, base, realm = self:NormalizePlayerName(name)
     if not base or not realm then return end
 
