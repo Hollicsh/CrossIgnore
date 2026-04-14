@@ -784,7 +784,7 @@ function CrossIgnore:IsPlayerBlocked(playerName)
 end
 
 function CrossIgnore:OnLFGDecline(event, id, status)
-    if status == "declined" then
+    if self.db.profile.settings.LFGBlock and status == "declined" then
         local info = C_LFGList.GetSearchResultInfo(id)
         if info and info.leaderName then
             self:AddIgnore(info.leaderName)
