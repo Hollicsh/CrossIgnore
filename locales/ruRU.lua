@@ -112,4 +112,11 @@ addonTable.Locales.ruRU = {
     DEBUG_ALLOWED = "|cff00ff00Допустимый|r",
     DEBUG_BLOCKED = "|cffff0000Заблокировано '%s' на %s%s|r",
     DEBUG_STRICT = " |cffff6600(Строгий)|r",
+    ADD_PLAYER_NAME_PLACEHOLDER = "Имя игрока",
+    ADD_PLAYER_SERVER_PLACEHOLDER = "Сервер",
+    ADD_PLAYER_POPUP_TITLE = "Добавить игнорируемого игрока",
+    ADD_PLAYER_BTN = "Добавить",
+    ADD_PLAYER_INVALID = "Введите корректные имя игрока и сервер.",
+    ADD_PLAYER_EXISTS = "Этот игрок уже заблокирован.",
+    ADD_PLAYER_SUCCESS = "%s добавлен в CrossIgnore.",
 }

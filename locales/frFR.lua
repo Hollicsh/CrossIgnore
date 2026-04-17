@@ -112,4 +112,11 @@ addonTable.Locales.frFR = {
     DEBUG_ALLOWED = "|cff00ff00Autorisé|r",
     DEBUG_BLOCKED = "|cffff0000Bloqué par '%s' sur %s%s|r",
     DEBUG_STRICT = " |cffff6600(Strict)|r",
+    ADD_PLAYER_NAME_PLACEHOLDER = "Nom du joueur",
+    ADD_PLAYER_SERVER_PLACEHOLDER = "Nom du serveur",
+    ADD_PLAYER_POPUP_TITLE = "Ajouter un joueur ignore",
+    ADD_PLAYER_BTN = "Ajouter",
+    ADD_PLAYER_INVALID = "Entrez un nom de joueur et de serveur valides.",
+    ADD_PLAYER_EXISTS = "Ce joueur est deja bloque.",
+    ADD_PLAYER_SUCCESS = "%s a ete ajoute a CrossIgnore.",
 }

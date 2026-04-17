@@ -14,6 +14,27 @@ UI.State = UI.State or {
 }
 UI.Frames = UI.Frames or {}
 
+function UI:HideAddPlayerPopup()
+  local popup = UI.Frames and UI.Frames.addPlayerPopup
+  if not popup then return end
+
+  popup.nameBox:SetText("")
+  popup.serverBox:SetText("")
+  popup:Hide()
+end
+
+function UI:ShowAddPlayerPopup(CrossIgnore)
+  local popup = UI.Frames and UI.Frames.addPlayerPopup
+  if not popup then return end
+
+  popup.CrossIgnore = CrossIgnore
+  popup.nameBox:SetText("")
+  popup.serverBox:SetText("")
+  popup:Show()
+  popup.nameBox:SetFocus()
+  popup.nameBox:HighlightText()
+end
+
 local function BuildPopups(CrossIgnore, CrossIgnoreDB)
   StaticPopupDialogs = StaticPopupDialogs or {}
 
@@ -51,6 +72,81 @@ local function BuildPopups(CrossIgnore, CrossIgnoreDB)
     whileDead = true,
     hideOnEscape = true,
   }
+
+  local popup = CreateFrame("Frame", "CrossIgnoreAddPlayerPopup", UIParent, "BackdropTemplate")
+  popup:SetSize(340, 210)
+  popup:SetPoint("CENTER")
+  popup:SetFrameStrata("DIALOG")
+  popup:SetFrameLevel(10)
+  popup:SetToplevel(true)
+  popup:EnableMouse(true)
+  popup:SetMovable(true)
+  popup:RegisterForDrag("LeftButton")
+  popup:SetScript("OnDragStart", popup.StartMoving)
+  popup:SetScript("OnDragStop", popup.StopMovingOrSizing)
+  popup:SetBackdrop({
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true, tileSize = 16, edgeSize = 16,
+    insets = { left = 4, right = 4, top = 4, bottom = 4 }
+  })
+  popup:Hide()
+
+  W:CreateLabel(popup, L["ADD_PLAYER_POPUP_TITLE"] or "Add Ignored Player", "TOP", 0, -20, "GameFontHighlight")
+
+  local nameLabel = W:CreateLabel(popup, L["PLAYER_NAME_HEADER"], "TOPLEFT", 24, -58, "GameFontNormal")
+  local nameBox = W:CreateEditBox(popup, 292, 24, "TOPLEFT", 24, -80)
+  W:AttachPlaceholder(nameBox, L["ADD_PLAYER_NAME_PLACEHOLDER"] or "Player name")
+
+  local serverLabel = W:CreateLabel(popup, L["SERVER_HEADER"], "TOPLEFT", 24, -114, "GameFontNormal")
+  local serverBox = W:CreateEditBox(popup, 292, 24, "TOPLEFT", 24, -136)
+  W:AttachPlaceholder(serverBox, L["ADD_PLAYER_SERVER_PLACEHOLDER"] or "Server name")
+
+  local function SubmitAddPlayer()
+    local activeAddon = popup.CrossIgnore or CrossIgnore
+    if not activeAddon then return end
+
+    local fullName = activeAddon:BuildPlayerName(nameBox:GetText(), serverBox:GetText())
+    if not fullName then
+      print(L["ADD_PLAYER_INVALID"] or "Enter a player and server name.")
+      return
+    end
+
+    local added, result = activeAddon:AddIgnore(fullName)
+    if not added then
+      if result == "exists" then
+        print(L["ADD_PLAYER_EXISTS"] or "That player is already blocked.")
+      else
+        print(L["ADD_PLAYER_INVALID"] or "Enter a player and server name.")
+      end
+      return
+    end
+
+    print(string.format(L["ADD_PLAYER_SUCCESS"] or "Added %s to CrossIgnore.", fullName))
+    activeAddon:RefreshBlockedList(UI.State.ignoreFilterText or "")
+    UI:HideAddPlayerPopup()
+  end
+
+  nameBox:SetScript("OnEnterPressed", function()
+    serverBox:SetFocus()
+    serverBox:HighlightText()
+  end)
+  serverBox:SetScript("OnEnterPressed", SubmitAddPlayer)
+
+  local addButton = W:CreateButton(popup, L["ADD_PLAYER_BTN"] or "Add Player", "BOTTOMLEFT", 24, 22, 128, 24, SubmitAddPlayer)
+  local cancelButton = W:CreateButton(popup, L["CANCEL"] or "Cancel", "BOTTOMRIGHT", -24, 22, 128, 24, function()
+    UI:HideAddPlayerPopup()
+  end)
+
+  popup.nameLabel = nameLabel
+  popup.serverLabel = serverLabel
+  popup.nameBox = nameBox
+  popup.serverBox = serverBox
+  popup.addButton = addButton
+  popup.cancelButton = cancelButton
+  UI.Frames.addPlayerPopup = popup
+
+  tinsert(UISpecialFrames, "CrossIgnoreAddPlayerPopup")
 end
 
 local function BuildLeftNav(leftPanel, panels, CrossIgnore)
@@ -146,6 +242,9 @@ function UI:BuildMainFrame(CrossIgnore, CrossIgnoreDB)
   f:RegisterForDrag("LeftButton")
   f:SetScript("OnDragStart", f.StartMoving)
   f:SetScript("OnDragStop", f.StopMovingOrSizing)
+  f:HookScript("OnHide", function()
+    UI:HideAddPlayerPopup()
+  end)
 
   W:CreateLabel(f, L["TITLE_HEADER"], "TOP", 0, -12, "GameFontHighlightLarge")
   W:CreateButton(f, L["CLOSE_BUTTON"], "TOPRIGHT", -10, -10, 70, 25, function() f:Hide() end)

@@ -139,7 +139,11 @@ function M:Build(panel, CrossIgnore)
     CrossIgnore:RefreshBlockedList(UI.State.ignoreFilterText or "")
   end
 
-  local removeSelectedBtn = W:CreateButton(footer, L["REMOVE_SELECTED_BTN"], "CENTER", 0, 0, 150, 26, RemoveSelectedPlayer)
+  local addPlayerBtn = W:CreateButton(footer, L["ADD_PLAYER_BTN"] or "Add Player", "LEFT", 0, 0, 120, 26, function()
+    UI:ShowAddPlayerPopup(CrossIgnore)
+  end)
+
+  local removeSelectedBtn = W:CreateButton(footer, L["REMOVE_SELECTED_BTN"], "LEFT", 130, 0, 150, 26, RemoveSelectedPlayer)
   UI.Frames.removePlayerBtn = removeSelectedBtn
 
   local removeAllBtn = W:CreateButton(footer, L["REMOVE_ALL_BTN"] or "Remove All", "RIGHT", 0, 0, 80, 26, function()
@@ -150,6 +154,7 @@ function M:Build(panel, CrossIgnore)
   removeAllBtn:HookScript("OnLeave", function(selfBtn) selfBtn:GetFontString():SetTextColor(1, 0.45, 0.45) end)
 
   UI.Frames.ignoreSearchBox = searchBox
+  UI.Frames.addPlayerBtn = addPlayerBtn
 end
 
 function M:Refresh(filterText)

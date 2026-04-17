@@ -63,6 +63,13 @@ addonTable.Locales.enUS = {
     OPTIONS_PRINT3       = "Failed to import filters. Make sure you pasted the exact string from the export box.",
 
     ACCOUNT_WIDE_LABEL   = "Account Wide Ignore",
+    ADD_PLAYER_NAME_PLACEHOLDER = "Player name",
+    ADD_PLAYER_SERVER_PLACEHOLDER = "Server name",
+    ADD_PLAYER_POPUP_TITLE = "Add Ignored Player",
+    ADD_PLAYER_BTN = "Add Player",
+    ADD_PLAYER_INVALID = "Enter a valid player and server name.",
+    ADD_PLAYER_EXISTS = "That player is already blocked.",
+    ADD_PLAYER_SUCCESS = "Added %s to CrossIgnore.",
     REMOVE_SELECTED_BTN  = "Remove Selected",
     CHAT_FILTER_TITLE    = "Chat Filter - Blocked Words",
     ADD_NEW_WORD_LABEL   = "Add New Word:",
