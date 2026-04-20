@@ -14,12 +14,131 @@ UI.State = UI.State or {
 }
 UI.Frames = UI.Frames or {}
 
+local function NormalizeRealmToken(value)
+  if value == nil then
+    return nil
+  end
+
+  local realm = strtrim(tostring(value or ""))
+  if realm == "" then
+    return nil
+  end
+
+  return realm:gsub("%s+", "")
+end
+
+local function NormalizeRealmSearchKey(value)
+  local realm = NormalizeRealmToken(value)
+  if not realm then
+    return nil
+  end
+
+  realm = realm:lower()
+  realm = realm:gsub("[%s%-%']", "")
+  return realm
+end
+
+local function FormatRealmDisplayName(value)
+  local realm = NormalizeRealmToken(value)
+  if not realm then
+    return ""
+  end
+
+  realm = realm:gsub("(%a)(%d)", "%1 %2")
+  realm = realm:gsub("(%d)(%a)", "%1 %2")
+  realm = realm:gsub("(%l)(%u)", "%1 %2")
+  return realm
+end
+
+local function CollectRealmNames(activeAddon)
+  local realms, seen = {}, {}
+
+  local function addRealm(value)
+    local realm = NormalizeRealmToken(value)
+    if not realm or seen[realm] then
+      return
+    end
+
+    seen[realm] = true
+    realms[#realms + 1] = realm
+  end
+
+  addRealm(GetNormalizedRealmName and GetNormalizedRealmName() or nil)
+  addRealm(GetRealmName and GetRealmName() or nil)
+
+  if activeAddon and activeAddon.RefreshKnownRealms then
+    activeAddon:RefreshKnownRealms()
+  end
+
+  if activeAddon and activeAddon.GetKnownRealms then
+    for _, realm in ipairs(activeAddon:GetKnownRealms() or {}) do
+      addRealm(realm)
+    end
+  end
+
+  if type(GetAutoCompleteRealms) == "function" then
+    local ok, result1, result2, result3, result4, result5, result6, result7, result8 = pcall(GetAutoCompleteRealms)
+    if ok then
+      if type(result1) == "table" then
+        for _, realm in ipairs(result1) do
+          addRealm(realm)
+        end
+      else
+        addRealm(result1)
+        addRealm(result2)
+        addRealm(result3)
+        addRealm(result4)
+        addRealm(result5)
+        addRealm(result6)
+        addRealm(result7)
+        addRealm(result8)
+      end
+    end
+  end
+
+  local function addFromList(list)
+    for _, entry in ipairs(list or {}) do
+      addRealm(entry and (entry.server or entry.realm))
+    end
+  end
+
+  if activeAddon and activeAddon.charDB and activeAddon.charDB.profile then
+    addFromList(activeAddon.charDB.profile.players)
+    addFromList(activeAddon.charDB.profile.overLimitPlayers)
+  end
+
+  if activeAddon and activeAddon.globalDB and activeAddon.globalDB.global then
+    addFromList(activeAddon.globalDB.global.players)
+    addFromList(activeAddon.globalDB.global.overLimitPlayers)
+  end
+
+  local defaultRealm = NormalizeRealmToken(GetNormalizedRealmName and GetNormalizedRealmName() or nil)
+  table.sort(realms, function(a, b)
+    if defaultRealm then
+      if a == defaultRealm and b ~= defaultRealm then
+        return true
+      end
+      if b == defaultRealm and a ~= defaultRealm then
+        return false
+      end
+    end
+    return a:lower() < b:lower()
+  end)
+
+  return realms
+end
+
 function UI:HideAddPlayerPopup()
   local popup = UI.Frames and UI.Frames.addPlayerPopup
   if not popup then return end
 
   popup.nameBox:SetText("")
-  popup.serverBox:SetText("")
+  if popup.SetSelectedRealm then
+    popup:SetSelectedRealm(popup.defaultRealm)
+  end
+  if popup.realmDropdown then
+    popup.realmDropdown:Hide()
+  end
   popup:Hide()
 end
 
@@ -29,7 +148,12 @@ function UI:ShowAddPlayerPopup(CrossIgnore)
 
   popup.CrossIgnore = CrossIgnore
   popup.nameBox:SetText("")
-  popup.serverBox:SetText("")
+  if popup.RefreshRealmOptions then
+    popup:RefreshRealmOptions()
+  end
+  if popup.SetSelectedRealm then
+    popup:SetSelectedRealm(popup.defaultRealm)
+  end
   popup:Show()
   popup.nameBox:SetFocus()
   popup.nameBox:HighlightText()
@@ -99,39 +223,200 @@ local function BuildPopups(CrossIgnore, CrossIgnoreDB)
   W:AttachPlaceholder(nameBox, L["ADD_PLAYER_NAME_PLACEHOLDER"] or "Player name")
 
   local serverLabel = W:CreateLabel(popup, L["SERVER_HEADER"], "TOPLEFT", 24, -114, "GameFontNormal")
-  local serverBox = W:CreateEditBox(popup, 292, 24, "TOPLEFT", 24, -136)
-  W:AttachPlaceholder(serverBox, L["ADD_PLAYER_SERVER_PLACEHOLDER"] or "Server name")
+  local defaultRealm = NormalizeRealmToken(GetNormalizedRealmName and GetNormalizedRealmName() or nil) or "Unknown"
+  local realmButton = CreateFrame("Button", nil, popup, "UIPanelButtonTemplate")
+  realmButton:SetSize(292, 24)
+  realmButton:SetPoint("TOPLEFT", 24, -136)
+  realmButton:SetText(FormatRealmDisplayName(defaultRealm))
+  realmButton:SetNormalFontObject("GameFontHighlightSmall")
+  realmButton:GetFontString():SetJustifyH("LEFT")
+  realmButton:GetFontString():SetPoint("LEFT", realmButton, "LEFT", 10, 0)
+  realmButton:GetFontString():SetPoint("RIGHT", realmButton, "RIGHT", -24, 0)
+
+  local arrowText = realmButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  arrowText:SetPoint("RIGHT", realmButton, "RIGHT", -10, 0)
+  arrowText:SetText("v")
+
+  local realmDropdown = CreateFrame("Frame", nil, popup, "BackdropTemplate")
+  realmDropdown:SetSize(292, 220)
+  realmDropdown:SetPoint("TOPLEFT", realmButton, "BOTTOMLEFT", 0, -4)
+  realmDropdown:SetFrameStrata("DIALOG")
+  realmDropdown:SetFrameLevel(popup:GetFrameLevel() + 5)
+  realmDropdown:SetBackdrop({
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true, tileSize = 16, edgeSize = 16,
+    insets = { left = 4, right = 4, top = 4, bottom = 4 }
+  })
+  realmDropdown:EnableMouse(true)
+  realmDropdown:Hide()
+
+  local realmSearchBox = W:CreateEditBox(realmDropdown, 248, 24, "TOPLEFT", 16, -18)
+  W:AttachPlaceholder(realmSearchBox, L["SEARCH_PLACEHOLDER"] or "Search...")
+
+  local realmListFrame = CreateFrame("Frame", nil, realmDropdown)
+  realmListFrame:SetPoint("TOPLEFT", realmSearchBox, "BOTTOMLEFT", 0, -10)
+  realmListFrame:SetSize(260, 150)
+  realmListFrame:EnableMouseWheel(true)
+
+  local noResultsLabel = realmDropdown:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+  noResultsLabel:SetPoint("TOPLEFT", realmListFrame, "TOPLEFT", 6, -8)
+  noResultsLabel:SetText(L["NO_RESULTS"] or "No matches found.")
+  noResultsLabel:Hide()
+
+  local realmButtons = {}
+  for i = 1, 8 do
+    local row = CreateFrame("Button", nil, realmListFrame, "UIPanelButtonTemplate")
+    row:SetSize(248, 18)
+    row:SetPoint("TOPLEFT", 6, -((i - 1) * 18))
+    row:GetFontString():SetJustifyH("LEFT")
+    row:GetFontString():SetPoint("LEFT", row, "LEFT", 8, 0)
+    row:GetFontString():SetPoint("RIGHT", row, "RIGHT", -8, 0)
+    realmButtons[i] = row
+  end
+
+  popup.defaultRealm = defaultRealm
+  popup.selectedRealm = defaultRealm
+  popup.realmOptions = {}
+  popup.filteredRealmOptions = {}
+  popup.realmScrollOffset = 0
+
+  function popup:SetSelectedRealm(realm)
+    local selected = NormalizeRealmToken(realm) or self.defaultRealm
+    self.selectedRealm = selected
+    realmButton:SetText(FormatRealmDisplayName(selected))
+    if realmDropdown:IsShown() then
+      realmDropdown:Hide()
+    end
+  end
+
+  function popup:GetSelectedRealm()
+    return NormalizeRealmToken(self.selectedRealm) or self.defaultRealm
+  end
+
+  function popup:RefreshRealmOptions()
+    self.defaultRealm = NormalizeRealmToken(GetNormalizedRealmName and GetNormalizedRealmName() or nil) or self.defaultRealm or "Unknown"
+    self.realmOptions = CollectRealmNames(self.CrossIgnore or CrossIgnore)
+    if #self.realmOptions == 0 then
+      self.realmOptions = { self.defaultRealm }
+    end
+    self:FilterRealmOptions(realmSearchBox:GetText())
+  end
+
+  function popup:FilterRealmOptions(searchText)
+    local filter = NormalizeRealmSearchKey(searchText) or ""
+    local typedRealm = NormalizeRealmToken(searchText)
+    wipe(self.filteredRealmOptions)
+
+    for _, realm in ipairs(self.realmOptions or {}) do
+      local realmKey = NormalizeRealmSearchKey(realm) or ""
+      if filter == "" or strfind(realmKey, filter, 1, true) then
+        self.filteredRealmOptions[#self.filteredRealmOptions + 1] = realm
+      end
+    end
+
+    if typedRealm and filter ~= "" then
+      local typedRealmKey = NormalizeRealmSearchKey(typedRealm)
+      local hasExactTypedRealm = false
+      for _, realm in ipairs(self.filteredRealmOptions) do
+        if NormalizeRealmSearchKey(realm) == typedRealmKey then
+          hasExactTypedRealm = true
+          break
+        end
+      end
+
+      if not hasExactTypedRealm then
+        table.insert(self.filteredRealmOptions, 1, typedRealm)
+      end
+    end
+
+    self.realmScrollOffset = 0
+    self:UpdateRealmDropdownButtons()
+  end
+
+  function popup:UpdateRealmDropdownButtons()
+    local visibleCount = 0
+
+    for index, button in ipairs(realmButtons) do
+      local realm = self.filteredRealmOptions[index + self.realmScrollOffset]
+      if realm then
+        visibleCount = visibleCount + 1
+        button:SetText(FormatRealmDisplayName(realm))
+        button:SetScript("OnClick", function()
+          popup:SetSelectedRealm(realm)
+        end)
+        button:Show()
+      else
+        button:Hide()
+      end
+    end
+
+    noResultsLabel:SetShown(visibleCount == 0)
+  end
+
+  realmListFrame:SetScript("OnMouseWheel", function(_, delta)
+    local maxOffset = max(0, #popup.filteredRealmOptions - #realmButtons)
+    if maxOffset <= 0 then
+      return
+    end
+
+    popup.realmScrollOffset = min(maxOffset, max(0, popup.realmScrollOffset - delta))
+    popup:UpdateRealmDropdownButtons()
+  end)
+
+  realmSearchBox:SetScript("OnTextChanged", function(self)
+    popup:FilterRealmOptions(self:GetText())
+  end)
+  realmSearchBox:SetScript("OnEscapePressed", function()
+    realmDropdown:Hide()
+  end)
+  realmSearchBox:SetScript("OnEnterPressed", function(self)
+    local realm = popup.filteredRealmOptions[1] or NormalizeRealmToken(self:GetText()) or popup.defaultRealm
+    popup:SetSelectedRealm(realm)
+    nameBox:SetFocus()
+    nameBox:HighlightText()
+  end)
+
+  realmButton:SetScript("OnClick", function()
+    if realmDropdown:IsShown() then
+      realmDropdown:Hide()
+      return
+    end
+
+    popup:RefreshRealmOptions()
+    realmSearchBox:SetText("")
+    realmDropdown:Show()
+    realmSearchBox:SetFocus()
+    realmSearchBox:HighlightText()
+  end)
 
   local function SubmitAddPlayer()
     local activeAddon = popup.CrossIgnore or CrossIgnore
     if not activeAddon then return end
 
-    local fullName = activeAddon:BuildPlayerName(nameBox:GetText(), serverBox:GetText())
-    if not fullName then
+    local realm = popup:GetSelectedRealm()
+    local rawName = strtrim(nameBox:GetText() or "")
+    local playerName = rawName:match("^[^%-]+") or rawName
+    local fullName, base, normalizedRealm = activeAddon:NormalizePlayerName(playerName .. "-" .. realm)
+    if not fullName or not base or not normalizedRealm then
       print(L["ADD_PLAYER_INVALID"] or "Enter a player and server name.")
       return
     end
 
-    local added, result = activeAddon:AddIgnore(fullName)
-    if not added then
-      if result == "exists" then
-        print(L["ADD_PLAYER_EXISTS"] or "That player is already blocked.")
-      else
-        print(L["ADD_PLAYER_INVALID"] or "Enter a player and server name.")
-      end
+    if activeAddon.IsPlayerInAnyList and activeAddon:IsPlayerInAnyList(base, normalizedRealm) then
+      print(L["ADD_PLAYER_EXISTS"] or "That player is already blocked.")
       return
     end
 
+    activeAddon:AddIgnore(fullName)
     print(string.format(L["ADD_PLAYER_SUCCESS"] or "Added %s to CrossIgnore.", fullName))
     activeAddon:RefreshBlockedList(UI.State.ignoreFilterText or "")
     UI:HideAddPlayerPopup()
   end
 
   nameBox:SetScript("OnEnterPressed", function()
-    serverBox:SetFocus()
-    serverBox:HighlightText()
+    realmButton:Click()
   end)
-  serverBox:SetScript("OnEnterPressed", SubmitAddPlayer)
 
   local addButton = W:CreateButton(popup, L["ADD_PLAYER_BTN"] or "Add Player", "BOTTOMLEFT", 24, 22, 128, 24, SubmitAddPlayer)
   local cancelButton = W:CreateButton(popup, L["CANCEL"] or "Cancel", "BOTTOMRIGHT", -24, 22, 128, 24, function()
@@ -141,7 +426,10 @@ local function BuildPopups(CrossIgnore, CrossIgnoreDB)
   popup.nameLabel = nameLabel
   popup.serverLabel = serverLabel
   popup.nameBox = nameBox
-  popup.serverBox = serverBox
+  popup.serverBox = realmButton
+  popup.realmButton = realmButton
+  popup.realmDropdown = realmDropdown
+  popup.realmSearchBox = realmSearchBox
   popup.addButton = addButton
   popup.cancelButton = cancelButton
   UI.Frames.addPlayerPopup = popup

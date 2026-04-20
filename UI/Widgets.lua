@@ -35,11 +35,20 @@ function W:AttachPlaceholder(editBox, placeholderText)
   local ph = editBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   ph:SetPoint("LEFT", editBox, "LEFT", 6, 0)
   ph:SetText(placeholderText or "")
+  ph:EnableMouse(false)
+
   local function refresh()
     local t = editBox:GetText() or ""
-    if t == "" then ph:Show() else ph:Hide() end
+    if t == "" and not editBox:HasFocus() then
+      ph:Show()
+    else
+      ph:Hide()
+    end
   end
+
   editBox:HookScript("OnTextChanged", refresh)
+  editBox:HookScript("OnEditFocusGained", refresh)
+  editBox:HookScript("OnEditFocusLost", refresh)
   refresh()
   return ph
 end

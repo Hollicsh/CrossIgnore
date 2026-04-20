@@ -160,6 +160,7 @@ function CrossIgnore:DelayedUpdateIgnoreList()
 end
 
 function CrossIgnore:OnEnable()
+    self:RefreshKnownRealms()
     self:ProcessPendingRemovals()
 end
 
@@ -171,6 +172,72 @@ local function ToSafeString(value)
     end
 
     return tostring(value)
+end
+
+local function NormalizeRealmToken(value)
+    local safeValue = ToSafeString(value)
+    if not safeValue then
+        return nil
+    end
+
+    local realm = strtrim(safeValue)
+    if realm == "" then
+        return nil
+    end
+
+    return realm:gsub("%s+", "")
+end
+
+function CrossIgnore:RefreshKnownRealms()
+    local realms, seen = {}, {}
+
+    local function addRealm(value)
+        local realm = NormalizeRealmToken(value)
+        if not realm or seen[realm] then
+            return
+        end
+
+        seen[realm] = true
+        realms[#realms + 1] = realm
+    end
+
+    addRealm(GetNormalizedRealmName and GetNormalizedRealmName() or nil)
+    addRealm(GetRealmName and GetRealmName() or nil)
+
+    if type(GetAutoCompleteRealms) == "function" then
+        local ok, result1, result2, result3, result4, result5, result6, result7, result8 = pcall(GetAutoCompleteRealms)
+        if ok then
+            if type(result1) == "table" then
+                for _, realm in ipairs(result1) do
+                    addRealm(realm)
+                end
+            else
+                addRealm(result1)
+                addRealm(result2)
+                addRealm(result3)
+                addRealm(result4)
+                addRealm(result5)
+                addRealm(result6)
+                addRealm(result7)
+                addRealm(result8)
+            end
+        end
+    end
+
+    table.sort(realms, function(a, b)
+        return a:lower() < b:lower()
+    end)
+
+    self.knownRealms = realms
+    return realms
+end
+
+function CrossIgnore:GetKnownRealms()
+    if not self.knownRealms or #self.knownRealms == 0 then
+        return self:RefreshKnownRealms()
+    end
+
+    return self.knownRealms
 end
 
 function CrossIgnore:NormalizePlayerName(name)
