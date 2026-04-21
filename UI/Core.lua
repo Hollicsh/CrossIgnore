@@ -4,6 +4,7 @@ addonTable.UI = addonTable.UI or {}
 local UI = addonTable.UI
 local Theme = UI.Theme
 local W = UI.Widgets
+local FALLBACK_REALM_NAMES = addonTable.RealmNames or {}
 
 UI.State = UI.State or {
   activePanel = "ignoreList",
@@ -110,6 +111,12 @@ local function CollectRealmNames(activeAddon)
   if activeAddon and activeAddon.globalDB and activeAddon.globalDB.global then
     addFromList(activeAddon.globalDB.global.players)
     addFromList(activeAddon.globalDB.global.overLimitPlayers)
+  end
+
+  if #realms <= 5 then
+    for _, realm in ipairs(FALLBACK_REALM_NAMES) do
+      addRealm(realm)
+    end
   end
 
   local defaultRealm = NormalizeRealmToken(GetNormalizedRealmName and GetNormalizedRealmName() or nil)

@@ -52,12 +52,11 @@ UI/Table.lua
 
 Data/Ignore.lua
 Data/Words.lua
+Data/Realms.lua
 
 UI/IgnoreList.lua
 UI/WordFilter.lua
 UI/Core.lua
 
-## UI ENTRY (hooks CreateUI / Refresh)
-CrossIgnore_UI_Entry.lua
-
-
+## UI ENTRY
+UI/Entry.lua
